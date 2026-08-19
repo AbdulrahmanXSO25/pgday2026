@@ -1,0 +1,30 @@
+{
+  "event": {
+    "name": "PG Day Egypt 2026",
+    "tagline": "Egypt's first PostgreSQL community conference",
+    "date": "2026-10-10",
+    "dateDisplay": "Saturday, October 10, 2026",
+    "city": "Cairo, Egypt",
+    "venueStatus": "tba",
+    "venueName": null,
+    "venueAddress": null,
+    "timezone": "Africa/Cairo"
+  },
+  "organizer": {
+    "name": "PostgreSQL Egypt User Group",
+    "contactEmail": "hello@pgegypt.org"
+  },
+  "features": {
+    "showSponsors": true,
+    "showCountdown": true
+  },
+  "social": {
+    "twitter": "https://x.com/pgegypt",
+    "linkedin": "https://www.linkedin.com/company/pgegypt",
+    "youtube": null
+  },
+  "registration": {
+    "open": true,
+    "closedMessage": "Registration is currently closed. Check back soon or follow us on social media for updates."
+  }
+}

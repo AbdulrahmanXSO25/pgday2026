@@ -1,0 +1,66 @@
+[
+  {
+    "id": "edb",
+    "name": "EDB",
+    "tier": "platinum",
+    "logo": "/images/sponsors/edb.svg",
+    "url": "https://www.enterprisedb.com",
+    "visible": true
+  },
+  {
+    "id": "microsoft-azure",
+    "name": "Microsoft Azure",
+    "tier": "platinum",
+    "logo": "/images/sponsors/azure.svg",
+    "url": "https://azure.microsoft.com",
+    "visible": true
+  },
+  {
+    "id": "google-cloud",
+    "name": "Google Cloud",
+    "tier": "gold",
+    "logo": "/images/sponsors/gcp.svg",
+    "url": "https://cloud.google.com",
+    "visible": true
+  },
+  {
+    "id": "aws",
+    "name": "AWS",
+    "tier": "gold",
+    "logo": "/images/sponsors/aws.svg",
+    "url": "https://aws.amazon.com",
+    "visible": true
+  },
+  {
+    "id": "fawry",
+    "name": "Fawry",
+    "tier": "gold",
+    "logo": "/images/sponsors/fawry.svg",
+    "url": "https://www.fawry.com",
+    "visible": true
+  },
+  {
+    "id": "percona",
+    "name": "Percona",
+    "tier": "silver",
+    "logo": "/images/sponsors/percona.svg",
+    "url": "https://www.percona.com",
+    "visible": true
+  },
+  {
+    "id": "instabug",
+    "name": "Instabug",
+    "tier": "silver",
+    "logo": "/images/sponsors/instabug.svg",
+    "url": "https://instabug.com",
+    "visible": true
+  },
+  {
+    "id": "robusta",
+    "name": "Robusta",
+    "tier": "community",
+    "logo": "/images/sponsors/robusta.svg",
+    "url": "https://robusta.co",
+    "visible": true
+  }
+]

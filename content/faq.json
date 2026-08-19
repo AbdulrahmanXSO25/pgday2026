@@ -1,0 +1,32 @@
+[
+  {
+    "id": "free",
+    "question": "Is the event free?",
+    "answer": "Yes, PG Day Egypt 2026 is free to attend. Registering secures your spot."
+  },
+  {
+    "id": "language",
+    "question": "What language will talks be in?",
+    "answer": "All talks and materials will be in English."
+  },
+  {
+    "id": "recording",
+    "question": "Will sessions be recorded?",
+    "answer": "We're aiming to record and publish talks after the event — details will be posted here once confirmed."
+  },
+  {
+    "id": "audience",
+    "question": "Who should attend?",
+    "answer": "Anyone working with or curious about PostgreSQL — backend engineers, DBAs, data engineers, students, and engineering leaders."
+  },
+  {
+    "id": "coc",
+    "question": "Is there a Code of Conduct?",
+    "answer": "Yes — see our [Code of Conduct](/code-of-conduct). All attendees, speakers, and sponsors are expected to follow it."
+  },
+  {
+    "id": "speaking",
+    "question": "How do I become a speaker or sponsor?",
+    "answer": "The agenda for 2026 is set, but reach out via [Contact](/contact) — we'd love to hear from you for future editions."
+  }
+]

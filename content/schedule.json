@@ -1,0 +1,120 @@
+[
+  {
+    "id": "registration",
+    "start": "09:00",
+    "end": "09:30",
+    "title": "Registration & Check-in",
+    "type": "logistics",
+    "speakerIds": []
+  },
+  {
+    "id": "opening",
+    "start": "09:30",
+    "end": "09:45",
+    "title": "Opening Remarks",
+    "type": "logistics",
+    "speakerIds": []
+  },
+  {
+    "id": "keynote-mena-rise",
+    "start": "09:45",
+    "end": "10:30",
+    "title": "The Rise of Postgres in the MENA Region",
+    "type": "keynote",
+    "level": null,
+    "abstract": "A look at how PostgreSQL adoption has grown across Egyptian and regional tech companies over the past decade, and what's driving it.",
+    "speakerIds": ["karim-el-sayed"]
+  },
+  {
+    "id": "indexing-strategies",
+    "start": "10:30",
+    "end": "11:15",
+    "title": "Indexing Strategies That Actually Matter",
+    "type": "talk",
+    "level": "intermediate",
+    "abstract": "A practical walkthrough of the indexing decisions that move the needle in production — and the ones that don't.",
+    "speakerIds": ["nourhan-adel"]
+  },
+  {
+    "id": "break-1",
+    "start": "11:15",
+    "end": "11:30",
+    "title": "Coffee Break",
+    "type": "break",
+    "speakerIds": []
+  },
+  {
+    "id": "scaling-100m",
+    "start": "11:30",
+    "end": "12:15",
+    "title": "Scaling Postgres Past 100M Transactions a Day",
+    "type": "talk",
+    "level": "advanced",
+    "abstract": "Lessons from running Postgres at the core of a national payments platform, including connection pooling, partitioning, and failover design.",
+    "speakerIds": ["ahmed-farouk"]
+  },
+  {
+    "id": "logical-replication",
+    "start": "12:15",
+    "end": "13:00",
+    "title": "Logical Replication in Practice",
+    "type": "talk",
+    "level": "intermediate",
+    "abstract": "How logical replication works under the hood, and where it fits versus physical replication and third-party tools.",
+    "speakerIds": ["mariam-hassan"]
+  },
+  {
+    "id": "lunch",
+    "start": "13:00",
+    "end": "14:00",
+    "title": "Lunch",
+    "type": "break",
+    "speakerIds": []
+  },
+  {
+    "id": "postgis-smart-city",
+    "start": "14:00",
+    "end": "14:45",
+    "title": "PostGIS for Smart City Applications",
+    "type": "talk",
+    "level": "beginner",
+    "abstract": "An introduction to geospatial data modeling with PostGIS, illustrated with real location-based product examples.",
+    "speakerIds": ["youssef-nabil"]
+  },
+  {
+    "id": "oracle-migration",
+    "start": "14:45",
+    "end": "15:30",
+    "title": "From Oracle to Postgres: A Migration War Story",
+    "type": "talk",
+    "level": "intermediate",
+    "abstract": "The unglamorous, practical realities of migrating a production system off Oracle onto PostgreSQL.",
+    "speakerIds": ["salma-mostafa"]
+  },
+  {
+    "id": "break-2",
+    "start": "15:30",
+    "end": "15:45",
+    "title": "Coffee Break",
+    "type": "break",
+    "speakerIds": []
+  },
+  {
+    "id": "community-panel",
+    "start": "15:45",
+    "end": "16:30",
+    "title": "Building the Postgres Community in Egypt & MENA",
+    "type": "panel",
+    "level": null,
+    "abstract": "A conversation between local and regional community members on growing user groups, mentorship, and first-time speaking opportunities.",
+    "speakerIds": ["omar-khaled", "dina-ashraf"]
+  },
+  {
+    "id": "closing",
+    "start": "16:30",
+    "end": "17:00",
+    "title": "Closing Remarks & Networking",
+    "type": "logistics",
+    "speakerIds": []
+  }
+]
