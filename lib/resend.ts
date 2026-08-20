@@ -3,14 +3,15 @@ import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { siteConfig } from "@/lib/config";
 
 const theme = {
-  bg: "#0A0E14",
-  surface: "#121820",
-  surfaceRaised: "#1A222C",
-  hairline: "#232C38",
-  ink: "#EAF0F6",
-  muted: "#8B98A9",
-  teal: "#2EE6D2",
-  amber: "#FFB454",
+  bg: "#F7F9FA",
+  surface: "#FFFFFF",
+  surfaceRaised: "#EEF2F5",
+  hairline: "#D7DEE4",
+  ink: "#2E3942",
+  muted: "#5A6B7A",
+  blue: "#336791",
+  blueDark: "#27557A",
+  amber: "#8A5A1E",
 };
 
 export async function sendRegistrationThankYouEmail(input: {
@@ -85,14 +86,14 @@ function escapeHtml(value: string): string {
 const button = (href: string, label: string, primary: boolean) => `
   <a href="${href}" style="
     display:inline-block;
-    padding:12px 28px;
-    border-radius:999px;
+    padding:10px 22px;
+    border:1px solid ${primary ? theme.blue : theme.hairline};
     font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
     font-size:14px;
     font-weight:600;
     text-decoration:none;
-    margin:0 6px 10px 0;
-    ${primary ? `background-color:${theme.teal};color:${theme.bg};` : `background-color:transparent;color:${theme.ink};border:1px solid ${theme.hairline};`}
+    margin:0 6px 8px 0;
+    ${primary ? `background-color:${theme.blue};color:#FFFFFF;` : `background-color:${theme.surface};color:${theme.blue};`}
   ">${label}</a>
 `;
 
@@ -104,15 +105,13 @@ export function buildHtmlEmail(input: { name: string; siteUrl: string }): string
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="color-scheme" content="dark" />
-  <meta name="supported-color-schemes" content="dark" />
+  <meta name="color-scheme" content="light" />
+  <meta name="supported-color-schemes" content="light" />
   <title>You're registered for PG Day Egypt 2026</title>
 </head>
 <body style="margin:0;padding:0;background-color:${theme.bg};">
   <div role="article" aria-roledescription="email" lang="en" style="
     background-color:${theme.bg};
-    background-image:linear-gradient(rgba(46,230,210,0.04) 1px,transparent 1px),linear-gradient(90deg,rgba(46,230,210,0.04) 1px,transparent 1px);
-    background-size:44px 44px;
     padding:32px 16px;
   ">
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;margin:0 auto;">
@@ -120,20 +119,19 @@ export function buildHtmlEmail(input: { name: string; siteUrl: string }): string
         <td>
 
           <!-- Header -->
-          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:20px;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:16px;">
             <tr>
-              <td style="padding:0 8px 16px;">
+              <td style="padding:0 4px 12px;border-bottom:2px solid ${theme.blue};">
                 <span style="
-                  font-family:'JetBrains Mono',ui-monospace,Menlo,Consolas,monospace;
+                  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
                   font-size:20px;
                   font-weight:700;
                   color:${theme.ink};
-                  letter-spacing:0.02em;
                 ">PG&nbsp;Day&nbsp;Egypt</span>
                 <span style="
                   font-family:'JetBrains Mono',ui-monospace,Menlo,Consolas,monospace;
                   font-size:12px;
-                  color:${theme.teal};
+                  color:${theme.blue};
                   letter-spacing:0.08em;
                 ">2026</span>
               </td>
@@ -144,31 +142,29 @@ export function buildHtmlEmail(input: { name: string; siteUrl: string }): string
           <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="
             background-color:${theme.surface};
             border:1px solid ${theme.hairline};
-            border-radius:12px;
-            overflow:hidden;
           ">
             <tr>
-              <td style="padding:36px 32px;">
+              <td style="padding:32px 32px 8px;">
 
                 <p style="
-                  margin:0 0 18px;
+                  margin:0 0 16px;
                   font-family:'JetBrains Mono',ui-monospace,Menlo,Consolas,monospace;
                   font-size:12px;
-                  letter-spacing:0.06em;
-                  color:${theme.teal};
+                  letter-spacing:0.04em;
+                  color:${theme.blue};
                 ">$ SELECT * FROM attendees WHERE email = '${escapeHtml(input.name.trim())}';</p>
 
                 <h1 style="
-                  margin:0 0 14px;
+                  margin:0 0 12px;
                   font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
-                  font-size:26px;
-                  line-height:1.25;
+                  font-size:24px;
+                  line-height:1.3;
                   font-weight:700;
                   color:${theme.ink};
                 ">Thanks for registering, ${firstName}!</h1>
 
                 <p style="
-                  margin:0 0 16px;
+                  margin:0 0 14px;
                   font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
                   font-size:15px;
                   line-height:1.6;
@@ -179,13 +175,12 @@ export function buildHtmlEmail(input: { name: string; siteUrl: string }): string
                   first PostgreSQL community conference.
                 </p>
 
-                <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 0 18px;">
+                <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 0 16px;">
                   <tr>
                     <td style="
-                      padding:14px 18px;
+                      padding:12px 16px;
                       background-color:${theme.surfaceRaised};
-                      border-left:2px solid ${theme.teal};
-                      border-radius:0 8px 8px 0;
+                      border-left:2px solid ${theme.blue};
                       font-family:'JetBrains Mono',ui-monospace,Menlo,Consolas,monospace;
                       font-size:13px;
                       color:${theme.ink};
@@ -199,7 +194,7 @@ export function buildHtmlEmail(input: { name: string; siteUrl: string }): string
                 </table>
 
                 <p style="
-                  margin:0 0 24px;
+                  margin:0 0 20px;
                   font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
                   font-size:15px;
                   line-height:1.6;
@@ -210,14 +205,14 @@ export function buildHtmlEmail(input: { name: string; siteUrl: string }): string
                 </p>
 
                 <p style="
-                  margin:0 0 18px;
+                  margin:0 0 14px;
                   font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
                   font-size:15px;
                   color:${theme.ink};
                   font-weight:600;
                 ">In the meantime:</p>
 
-                <div style="margin:0 0 8px;">
+                <div style="margin:0 0 12px;">
                   ${button(`${input.siteUrl}/schedule`, "View the schedule →", true)}
                   ${button(`${input.siteUrl}/speakers`, "Meet the speakers", false)}
                 </div>
@@ -229,7 +224,7 @@ export function buildHtmlEmail(input: { name: string; siteUrl: string }): string
           <!-- Footer -->
           <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
             <tr>
-              <td style="padding:24px 8px 0;text-align:center;">
+              <td style="padding:20px 4px 0;text-align:center;">
                 <p style="
                   margin:0 0 6px;
                   font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
@@ -241,13 +236,13 @@ export function buildHtmlEmail(input: { name: string; siteUrl: string }): string
                   <strong style="color:${theme.ink};">The PG Day Egypt Team</strong>
                 </p>
                 <p style="
-                  margin:14px 0 0;
+                  margin:12px 0 0;
                   font-family:'JetBrains Mono',ui-monospace,Menlo,Consolas,monospace;
                   font-size:11px;
                   letter-spacing:0.04em;
                   color:${theme.muted};
                 ">
-                  PG Day Egypt 2026 · Cairo, Egypt · <a href="mailto:${siteConfig.organizer.contactEmail}" style="color:${theme.teal};text-decoration:none;">${siteConfig.organizer.contactEmail}</a>
+                  PG Day Egypt 2026 · Cairo, Egypt · <a href="mailto:${siteConfig.organizer.contactEmail}" style="color:${theme.blue};text-decoration:none;">${siteConfig.organizer.contactEmail}</a>
                 </p>
               </td>
             </tr>

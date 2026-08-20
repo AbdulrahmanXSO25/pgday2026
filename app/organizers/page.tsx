@@ -3,7 +3,6 @@ import { LinkedInIcon, XIcon } from "@/components/ui/social-icons";
 import { organizers } from "@/lib/content";
 import { PageHero } from "@/components/ui/page-hero";
 import { Section } from "@/components/ui/section";
-import { Reveal } from "@/components/ui/reveal";
 
 export const metadata: Metadata = {
   title: "Organizers",
@@ -21,13 +20,13 @@ export default function OrganizersPage() {
 
       <Section>
         <ul className="grid gap-5 sm:grid-cols-2">
-          {organizers.map((organizer, i) => (
-            <Reveal as="li" key={organizer.id} delay={Math.min(i, 3) * 70}>
+          {organizers.map((organizer) => (
+            <li key={organizer.id}>
               <article className="card card-hover h-full p-6">
                 <div className="flex items-center gap-4">
                   <div
                     aria-hidden="true"
-                    className="mono-data border-neon-teal/40 bg-neon-teal/10 text-neon-teal flex size-12 shrink-0 items-center justify-center rounded-full border text-lg"
+                    className="mono-data border-hairline bg-surface-raised text-pg-blue flex size-12 shrink-0 items-center justify-center rounded-sm border text-lg"
                   >
                     {organizer.name
                       .split(" ")
@@ -49,7 +48,7 @@ export default function OrganizersPage() {
                       target="_blank"
                       rel="noopener noreferrer"
                       aria-label={`${organizer.name} on LinkedIn`}
-                      className="text-ink-muted hover:text-neon-teal transition-colors"
+                      className="text-ink-muted hover:text-pg-blue transition-colors"
                     >
                       <LinkedInIcon className="size-4" />
                     </a>
@@ -60,14 +59,14 @@ export default function OrganizersPage() {
                       target="_blank"
                       rel="noopener noreferrer"
                       aria-label={`${organizer.name} on X`}
-                      className="text-ink-muted hover:text-neon-teal transition-colors"
+                      className="text-ink-muted hover:text-pg-blue transition-colors"
                     >
                       <XIcon className="size-4" />
                     </a>
                   )}
                 </div>
               </article>
-            </Reveal>
+            </li>
           ))}
         </ul>
       </Section>

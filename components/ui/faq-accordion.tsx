@@ -13,7 +13,7 @@ export function FaqAccordion({
   const [openId, setOpenId] = useState<string | null>(items[0]?.id ?? null);
 
   return (
-    <div className="divide-hairline border-hairline bg-surface/60 mx-auto max-w-3xl divide-y rounded-xl border">
+    <div className="divide-hairline border-hairline bg-surface mx-auto max-w-3xl divide-y border">
       {items.map((item) => {
         const open = openId === item.id;
         return (
@@ -33,7 +33,7 @@ export function FaqAccordion({
                 <ChevronDown
                   aria-hidden="true"
                   className={cn(
-                    "text-neon-teal size-4 shrink-0 transition-transform duration-200",
+                    "text-pg-blue size-4 shrink-0 transition-transform duration-200",
                     open && "rotate-180"
                   )}
                 />

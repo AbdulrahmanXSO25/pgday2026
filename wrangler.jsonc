@@ -1,36 +1,34 @@
 {
-	"$schema": "node_modules/wrangler/config-schema.json",
-	"main": ".open-next/worker.js",
-	"name": "pgegypt-2026",
-	"compatibility_date": "2026-08-01",
-	"compatibility_flags": [
-		"nodejs_compat"
-	],
-	"assets": {
-		"directory": ".open-next/assets",
-		"binding": "ASSETS",
-	},
-	"services": [
-		{
-			"binding": "WORKER_SELF_REFERENCE",
-			"service": "pgegypt-2026",
-		},
-	],
-	"images": {
-		"binding": "IMAGES",
-	},
-	"d1_databases": [
-		{
-			"binding": "DB",
-			"database_name": "pgegypt-db",
-			"database_id": "ec83ec7f-52bb-4428-8575-46f3a364ca4d",
-			"migrations_dir": "migrations",
-		}
-	],
-	"observability": {
-		"enabled": true,
-	},
-	"vars": {
-		"SITE_URL": "https://pgegypt.org",
-	},
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "main": ".open-next/worker.js",
+  "name": "pgegypt-2026",
+  "compatibility_date": "2026-08-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS",
+  },
+  "services": [
+    {
+      "binding": "WORKER_SELF_REFERENCE",
+      "service": "pgegypt-2026",
+    },
+  ],
+  "images": {
+    "binding": "IMAGES",
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "pgegypt-db",
+      "database_id": "ec83ec7f-52bb-4428-8575-46f3a364ca4d",
+      "migrations_dir": "migrations",
+    },
+  ],
+  "observability": {
+    "enabled": true,
+  },
+  "vars": {
+    "SITE_URL": "https://pgegypt.org",
+  },
 }

@@ -41,7 +41,7 @@ export default function VenuePage() {
 
         <div
           aria-hidden="true"
-          className="grid-texture border-hairline bg-surface/40 mt-6 flex min-h-[220px] items-center justify-center rounded-xl border border-dashed"
+          className="border-hairline bg-surface mt-6 flex min-h-[200px] items-center justify-center border border-dashed"
         >
           <div className="text-center">
             <MapPin aria-hidden="true" className="text-ink-muted/50 mx-auto size-8" />
@@ -58,7 +58,7 @@ export default function VenuePage() {
           </div>
           <div className="card p-5">
             <dt className="text-ink-muted">-- status</dt>
-            <dd className="text-neon-amber mt-1">tba</dd>
+            <dd className="text-pg-amber mt-1">tba</dd>
           </div>
         </dl>
       </Section>

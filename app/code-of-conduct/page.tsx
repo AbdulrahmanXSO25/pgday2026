@@ -73,10 +73,7 @@ export default function CodeOfConductPage() {
             <ul className="list-disc space-y-2 pl-5">
               <li>
                 Email the organizing team at{" "}
-                <a
-                  href={`mailto:${contact}`}
-                  className="text-neon-teal font-medium hover:underline"
-                >
+                <a href={`mailto:${contact}`} className="text-pg-blue font-medium hover:underline">
                   {contact}
                 </a>{" "}
                 — monitored before, during, and after the event.
@@ -116,7 +113,7 @@ function CoCSection({ title, children }: { title: string; children: React.ReactN
   return (
     <section>
       <h2 className="font-display text-ink text-xl font-bold">
-        <span className="mono-data text-neon-teal mr-3">--</span>
+        <span className="mono-data text-pg-blue mr-3">--</span>
         {title}
       </h2>
       <div className="text-ink-muted mt-3 space-y-3 leading-relaxed">{children}</div>

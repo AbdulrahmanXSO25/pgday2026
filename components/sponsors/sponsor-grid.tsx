@@ -10,19 +10,19 @@ const tierStyles: Record<SponsorTier, string> = {
 };
 
 const tierCols: Record<SponsorTier, string> = {
-  platinum: "grid-cols-1 gap-6 sm:grid-cols-2",
-  gold: "grid-cols-2 gap-6 sm:grid-cols-3",
-  silver: "grid-cols-2 gap-6 sm:grid-cols-3",
-  community: "grid-cols-3 gap-6 sm:grid-cols-4",
+  platinum: "grid-cols-1 gap-4 sm:grid-cols-2",
+  gold: "grid-cols-2 gap-4 sm:grid-cols-3",
+  silver: "grid-cols-2 gap-4 sm:grid-cols-3",
+  community: "grid-cols-3 gap-4 sm:grid-cols-4",
 };
 
 export function SponsorTier({ tier, sponsors }: { tier: SponsorTier; sponsors: Sponsor[] }) {
   if (sponsors.length === 0) return null;
 
   return (
-    <div className="mb-12 last:mb-0">
-      <h3 className="mono-data text-ink-muted mb-6">
-        <span className="text-neon-teal">--</span> {sponsorTierLabels[tier]}
+    <div className="mb-10 last:mb-0">
+      <h3 className="mono-data border-hairline text-ink-muted mb-4 border-b pb-2">
+        <span className="text-pg-blue">--</span> {sponsorTierLabels[tier]}
       </h3>
       <ul className={cn("grid items-center", tierCols[tier])}>
         {sponsors.map((sponsor) => (
@@ -31,7 +31,7 @@ export function SponsorTier({ tier, sponsors }: { tier: SponsorTier; sponsors: S
               href={sponsor.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="group hover:bg-surface-raised relative flex items-center justify-center rounded-lg p-3 transition-colors"
+              className="group flex items-center justify-center p-3"
               aria-label={`${sponsor.name} (opens in a new tab)`}
             >
               <Image
@@ -40,7 +40,7 @@ export function SponsorTier({ tier, sponsors }: { tier: SponsorTier; sponsors: S
                 width={220}
                 height={80}
                 className={cn(
-                  "w-auto opacity-70 transition-opacity duration-200 group-hover:opacity-100",
+                  "w-auto opacity-80 transition-opacity duration-100 group-hover:opacity-100",
                   tierStyles[tier]
                 )}
               />

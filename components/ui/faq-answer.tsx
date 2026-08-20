@@ -16,7 +16,7 @@ export function renderFaqAnswer(answer: string): ReactNode[] {
     }
     if (match.index > 0) parts.push(remaining.slice(0, match.index));
     parts.push(
-      <Link key={key++} href={match[2]} className="text-neon-teal font-medium hover:underline">
+      <Link key={key++} href={match[2]} className="text-pg-blue font-medium hover:underline">
         {match[1]}
       </Link>
     );

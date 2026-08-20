@@ -36,7 +36,7 @@ const fieldConfig: {
 ];
 
 const inputStyles =
-  "w-full rounded-lg border border-hairline bg-void px-4 py-2.5 text-sm text-ink placeholder:text-ink-muted/60 transition-colors focus:border-neon-teal/60 focus:outline-none focus:ring-2 focus:ring-neon-teal/25";
+  "w-full rounded-sm border border-hairline bg-surface px-3 py-2 text-sm text-ink placeholder:text-ink-muted/60 transition-colors focus:border-pg-blue focus:outline-none focus:ring-1 focus:ring-pg-blue/40";
 
 export function RegisterForm() {
   const [values, setValues] = useState<FormValues>({
@@ -122,14 +122,14 @@ export function RegisterForm() {
   if (submitState.status === "success") {
     return (
       <div role="status" className="card mx-auto max-w-xl p-8 text-center sm:p-10">
-        <CheckCircle2 aria-hidden="true" className="text-neon-teal mx-auto size-12" />
+        <CheckCircle2 aria-hidden="true" className="text-pg-blue mx-auto size-12" />
         <h2 className="font-display text-ink mt-5 text-2xl font-bold">You&apos;re registered!</h2>
         <p className="text-ink-muted mt-3 leading-relaxed">
           Check your email for a confirmation from us. We&apos;ll follow up closer to the event with
           final attendance details.
         </p>
         <p className="mono-data text-ink-muted mt-6">
-          INSERT INTO attendees … <span className="text-neon-teal">1 row inserted</span>
+          INSERT INTO attendees … <span className="text-pg-blue">1 row inserted</span>
         </p>
       </div>
     );
@@ -140,7 +140,7 @@ export function RegisterForm() {
       {submitState.status === "error" && (
         <div
           role="alert"
-          className="border-neon-amber/40 bg-neon-amber/10 text-neon-amber mb-6 rounded-lg border px-4 py-3 text-sm"
+          className="border-pg-amber bg-pg-amber/10 text-pg-amber mb-6 rounded-sm border px-3 py-2.5 text-sm"
         >
           {submitState.message}
         </div>
@@ -167,11 +167,7 @@ export function RegisterForm() {
                 disabled={submitting}
                 aria-invalid={Boolean(errors[field.name])}
                 aria-describedby={errors[field.name] ? `error-${field.name}` : undefined}
-                className={cn(
-                  inputStyles,
-                  "resize-y",
-                  errors[field.name] && "border-neon-amber/60"
-                )}
+                className={cn(inputStyles, "resize-y", errors[field.name] && "border-pg-amber/60")}
               />
             ) : (
               <input
@@ -185,14 +181,11 @@ export function RegisterForm() {
                 disabled={submitting}
                 aria-invalid={Boolean(errors[field.name])}
                 aria-describedby={errors[field.name] ? `error-${field.name}` : undefined}
-                className={cn(inputStyles, errors[field.name] && "border-neon-amber/60")}
+                className={cn(inputStyles, errors[field.name] && "border-pg-amber/60")}
               />
             )}
             {errors[field.name] && (
-              <p
-                id={`error-${field.name}`}
-                className="mono-data text-neon-amber mt-1.5 text-[11px]"
-              >
+              <p id={`error-${field.name}`} className="mono-data text-pg-amber mt-1.5 text-[11px]">
                 ✗ {errors[field.name]}
               </p>
             )}
@@ -210,18 +203,18 @@ export function RegisterForm() {
               disabled={submitting}
               aria-invalid={Boolean(errors.consent)}
               aria-describedby={errors.consent ? "error-consent" : undefined}
-              className="mt-0.5 size-4 shrink-0 accent-[#2EE6D2]"
+              className="mt-0.5 size-4 shrink-0 accent-[#336791]"
             />
             <span>
               I agree to be contacted about PG Day Egypt 2026
-              <span aria-hidden="true" className="text-neon-amber">
+              <span aria-hidden="true" className="text-pg-amber">
                 {" "}
                 *
               </span>
             </span>
           </label>
           {errors.consent && (
-            <p id="error-consent" className="mono-data text-neon-amber mt-1.5 text-[11px]">
+            <p id="error-consent" className="mono-data text-pg-amber mt-1.5 text-[11px]">
               ✗ {errors.consent}
             </p>
           )}
@@ -230,7 +223,7 @@ export function RegisterForm() {
         <button
           type="submit"
           disabled={submitting}
-          className="bg-neon-teal text-void w-full rounded-full px-6 py-3.5 text-sm font-semibold transition-all hover:shadow-[0_0_24px_rgb(46_230_210/0.35)] hover:brightness-110 active:scale-[0.99] disabled:pointer-events-none disabled:opacity-60"
+          className="bg-pg-blue border-pg-blue hover:bg-pg-blue-dark w-full rounded-sm border px-6 py-3 text-sm font-semibold text-white transition-colors disabled:pointer-events-none disabled:opacity-60"
         >
           {submitting ? (
             <span className="inline-flex items-center gap-2">

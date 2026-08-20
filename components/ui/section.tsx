@@ -5,21 +5,15 @@ export function Section({
   id,
   children,
   className,
-  texture = false,
 }: {
   id?: string;
   children: ReactNode;
   className?: string;
-  texture?: boolean;
 }) {
   return (
     <section
       id={id}
-      className={cn(
-        "relative mx-auto w-full max-w-6xl px-5 py-16 sm:px-8 sm:py-20",
-        texture && "grid-texture",
-        className
-      )}
+      className={cn("mx-auto w-full max-w-6xl px-5 py-12 sm:px-8 sm:py-14", className)}
     >
       {children}
     </section>
@@ -38,13 +32,11 @@ export function SectionHeader({
   className?: string;
 }) {
   return (
-    <div className={cn("mb-10 max-w-2xl sm:mb-12", className)}>
-      {eyebrow && <p className="mono-data text-neon-teal mb-3">{eyebrow}</p>}
-      <h2 className="font-display text-ink text-3xl font-bold tracking-tight sm:text-4xl">
-        {title}
-      </h2>
+    <div className={cn("mb-8 max-w-2xl", className)}>
+      {eyebrow && <p className="mono-data text-pg-blue mb-2">{eyebrow}</p>}
+      <h2 className="text-ink text-2xl font-bold tracking-tight sm:text-3xl">{title}</h2>
       {description && (
-        <p className="text-ink-muted mt-4 text-base leading-relaxed sm:text-lg">{description}</p>
+        <p className="text-ink-muted mt-3 text-base leading-relaxed">{description}</p>
       )}
     </div>
   );

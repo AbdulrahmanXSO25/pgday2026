@@ -15,9 +15,9 @@ export default function Error({
   }, [error]);
 
   return (
-    <div className="grid-texture relative flex min-h-[60vh] items-center justify-center px-5 py-20">
+    <div className="relative flex min-h-[60vh] items-center justify-center px-5 py-20">
       <div className="max-w-xl text-center">
-        <p className="mono-data text-neon-amber">ERROR: 500</p>
+        <p className="mono-data text-pg-amber">ERROR: 500</p>
         <h1 className="font-display text-ink mt-3 text-3xl font-bold">Something went wrong</h1>
         <p className="text-ink-muted mt-3 leading-relaxed">
           The query blew up unexpectedly. Try running it again — if the problem persists, contact

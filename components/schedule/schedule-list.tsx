@@ -13,7 +13,7 @@ export function ScheduleList({
   const visible = limit ? items.slice(0, limit) : items;
 
   return (
-    <ol className="divide-hairline/60 border-hairline bg-surface/60 divide-y rounded-xl border">
+    <ol className="divide-hairline border-hairline bg-surface divide-y border">
       {visible.map((session) => (
         <ScheduleRow
           key={session.id}

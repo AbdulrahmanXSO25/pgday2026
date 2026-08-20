@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { siteConfig } from "@/lib/config";
 import { PageHero } from "@/components/ui/page-hero";
 import { Section, SectionHeader } from "@/components/ui/section";
-import { Reveal } from "@/components/ui/reveal";
 import { Badge } from "@/components/ui/badge";
 
 export const metadata: Metadata = {
@@ -29,7 +28,7 @@ export default function AboutPage() {
 
       <Section>
         <div className="grid gap-12 lg:grid-cols-[1.6fr_1fr] lg:gap-16">
-          <Reveal>
+          <div>
             <p className="text-ink-muted text-lg leading-relaxed">
               PG Day Egypt is a community-run, one-day conference for everyone who builds on
               PostgreSQL — backend engineers, DBAs, data engineers, and curious developers across
@@ -54,9 +53,9 @@ export default function AboutPage() {
               practitioners, surface regional production experience, and give Egyptian engineers a
               home-grown stage to share what they&apos;ve learned.
             </p>
-          </Reveal>
+          </div>
 
-          <Reveal delay={120}>
+          <div>
             <aside className="card p-7">
               <h2 className="font-display text-ink text-xl font-bold">Who should attend</h2>
               <ul className="mt-5 space-y-3.5">
@@ -65,7 +64,7 @@ export default function AboutPage() {
                     key={item}
                     className="text-ink-muted flex items-start gap-3 text-sm leading-relaxed"
                   >
-                    <span aria-hidden="true" className="mono-data text-neon-teal mt-0.5">
+                    <span aria-hidden="true" className="mono-data text-pg-blue mt-0.5">
                       ▸
                     </span>
                     {item}
@@ -73,7 +72,7 @@ export default function AboutPage() {
                 ))}
               </ul>
               <div className="border-hairline mt-7 border-t pt-5">
-                <Badge variant="teal">free to attend</Badge>
+                <Badge variant="blue">free to attend</Badge>
                 <Badge variant="neutral" className="ml-2">
                   single track
                 </Badge>
@@ -82,11 +81,11 @@ export default function AboutPage() {
                 </Badge>
               </div>
             </aside>
-          </Reveal>
+          </div>
         </div>
       </Section>
 
-      <Section className="border-hairline bg-surface/30 border-t" texture>
+      <Section className="border-hairline bg-surface border-t">
         <SectionHeader eyebrow="$ SELECT * FROM values" title="What we stand for" />
         <div className="grid gap-5 sm:grid-cols-3">
           {[
@@ -103,13 +102,13 @@ export default function AboutPage() {
               body: "First-time conference-goers, first-time speakers, students and veterans — a warm room for all, backed by a clear Code of Conduct.",
             },
           ].map((value, i) => (
-            <Reveal key={value.title} delay={i * 90}>
+            <div key={value.title}>
               <article className="card card-hover h-full p-6">
-                <p className="mono-data text-neon-teal">{`0${i + 1}`}</p>
+                <p className="mono-data text-pg-blue">{`0${i + 1}`}</p>
                 <h3 className="font-display text-ink mt-3 text-lg font-semibold">{value.title}</h3>
                 <p className="text-ink-muted mt-2.5 text-sm leading-relaxed">{value.body}</p>
               </article>
-            </Reveal>
+            </div>
           ))}
         </div>
       </Section>

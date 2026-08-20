@@ -21,7 +21,7 @@ export function Footer() {
 
   return (
     <footer className="border-hairline bg-surface border-t">
-      <div className="mx-auto grid w-full max-w-6xl gap-10 px-5 py-14 sm:grid-cols-2 sm:px-8 lg:grid-cols-4">
+      <div className="mx-auto grid w-full max-w-6xl gap-10 px-5 py-12 sm:grid-cols-2 sm:px-8 lg:grid-cols-4">
         <div className="sm:col-span-2 lg:col-span-1">
           <Logo />
           <p className="text-ink-muted mt-4 max-w-xs text-sm leading-relaxed">
@@ -36,11 +36,11 @@ export function Footer() {
         <FooterColumn title="Event" links={eventLinks} />
         <FooterColumn title="Community" links={communityLinks} />
 
-        <div>
-          <h2 className="mono-data text-neon-teal mb-4">Connect</h2>
-          <ul className="space-y-2.5 text-sm">
+        <nav aria-label="Connect">
+          <h2 className="mono-data text-pg-blue mb-4">Connect</h2>
+          <ul className="space-y-2 text-sm">
             <li>
-              <Link href="/contact" className="text-ink-muted hover:text-ink transition-colors">
+              <Link href="/contact" className="text-ink-muted hover:text-pg-blue">
                 Contact
               </Link>
             </li>
@@ -50,7 +50,7 @@ export function Footer() {
                   href={social.twitter}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-ink-muted hover:text-ink transition-colors"
+                  className="text-ink-muted hover:text-pg-blue"
                 >
                   X / Twitter
                 </a>
@@ -62,7 +62,7 @@ export function Footer() {
                   href={social.linkedin}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-ink-muted hover:text-ink transition-colors"
+                  className="text-ink-muted hover:text-pg-blue"
                 >
                   LinkedIn
                 </a>
@@ -71,17 +71,17 @@ export function Footer() {
             <li>
               <a
                 href={`mailto:${siteConfig.organizer.contactEmail}`}
-                className="text-ink-muted hover:text-ink transition-colors"
+                className="text-ink-muted hover:text-pg-blue"
               >
                 {siteConfig.organizer.contactEmail}
               </a>
             </li>
           </ul>
-        </div>
+        </nav>
       </div>
 
       <div className="border-hairline border-t">
-        <div className="text-ink-muted mx-auto flex w-full max-w-6xl flex-col items-center justify-between gap-2 px-5 py-5 text-xs sm:flex-row sm:px-8">
+        <div className="text-ink-muted mx-auto flex w-full max-w-6xl flex-col items-center justify-between gap-2 px-5 py-4 text-xs sm:flex-row sm:px-8">
           <p>
             © {new Date().getFullYear()} {siteConfig.organizer.name}. All rights reserved.
           </p>
@@ -103,11 +103,11 @@ function FooterColumn({
 }) {
   return (
     <nav aria-label={title}>
-      <h2 className="mono-data text-neon-teal mb-4">{title}</h2>
-      <ul className="space-y-2.5 text-sm">
+      <h2 className="mono-data text-pg-blue mb-4">{title}</h2>
+      <ul className="space-y-2 text-sm">
         {links.map((link) => (
           <li key={link.href}>
-            <Link href={link.href} className="text-ink-muted hover:text-ink transition-colors">
+            <Link href={link.href} className="text-ink-muted hover:text-pg-blue">
               {link.label}
             </Link>
           </li>

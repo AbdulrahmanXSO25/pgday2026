@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 60" role="img" aria-label="Percona placeholder logo">
-  <path d="M18 40V20c0-4 3-6 7-6h14c4 0 7 2 7 6v20c0 4-3 6-7 6H25c-4 0-7-2-7-6z" fill="none" stroke="#8B98A9" stroke-width="3"/>
-  <circle cx="28" cy="30" r="3" fill="#8B98A9"/>
-  <circle cx="46" cy="30" r="3" fill="#8B98A9"/>
-  <text x="64" y="37" font-family="monospace" font-size="18" fill="#8B98A9">percona</text>
+  <path d="M18 40V20c0-4 3-6 7-6h14c4 0 7 2 7 6v20c0 4-3 6-7 6H25c-4 0-7-2-7-6z" fill="none" stroke="#4A5A66" stroke-width="3"/>
+  <circle cx="28" cy="30" r="3" fill="#4A5A66"/>
+  <circle cx="46" cy="30" r="3" fill="#4A5A66"/>
+  <text x="64" y="37" font-family="monospace" font-size="18" fill="#4A5A66">percona</text>
 </svg>

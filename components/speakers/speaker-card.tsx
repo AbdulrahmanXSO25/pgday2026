@@ -18,7 +18,7 @@ export function SpeakerCard({
   return (
     <article
       className={cn(
-        "card card-hover group focus-within:ring-neon-teal focus-within:ring-offset-void relative flex flex-col overflow-hidden focus-within:ring-2 focus-within:ring-offset-2",
+        "card card-hover group focus-within:outline-pg-blue relative flex flex-col focus-within:outline-2 focus-within:outline-offset-2",
         className
       )}
     >
@@ -26,7 +26,7 @@ export function SpeakerCard({
         href={`/speakers/${speaker.id}`}
         tabIndex={-1}
         aria-hidden="true"
-        className="bg-surface-raised relative block aspect-square overflow-hidden focus-visible:outline-none"
+        className="border-hairline bg-surface-raised relative block aspect-square border-b"
       >
         <Image
           src={speaker.photo}
@@ -34,20 +34,13 @@ export function SpeakerCard({
           fill
           priority={priority}
           sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"
-          className="object-cover transition-transform duration-300 group-hover:scale-[1.03]"
-        />
-        <div
-          aria-hidden="true"
-          className="from-surface absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t to-transparent"
+          className="object-cover"
         />
       </Link>
 
-      <div className="flex flex-1 flex-col p-5">
-        <h3 className="font-display text-ink text-lg font-semibold">
-          <Link
-            href={`/speakers/${speaker.id}`}
-            className="group-hover:text-neon-teal transition-colors focus-visible:outline-none"
-          >
+      <div className="flex flex-1 flex-col p-4">
+        <h3 className="text-ink text-base font-bold">
+          <Link href={`/speakers/${speaker.id}`} className="hover:text-pg-blue">
             <span aria-hidden="true" className="absolute inset-0" />
             {speaker.name}
           </Link>
@@ -57,19 +50,19 @@ export function SpeakerCard({
         </p>
 
         {session && (
-          <p className="text-ink-muted mt-3 line-clamp-2 text-sm leading-relaxed">
-            <span className="mono-data text-neon-teal/70">[talk]</span> {session.title}
+          <p className="text-ink-muted mt-2.5 line-clamp-2 text-sm leading-relaxed">
+            <span className="mono-data text-pg-blue">[talk]</span> {session.title}
           </p>
         )}
 
-        <div className="mt-4 flex items-center gap-3">
+        <div className="mt-3 flex items-center gap-3">
           {speaker.social.linkedin && (
             <a
               href={speaker.social.linkedin}
               target="_blank"
               rel="noopener noreferrer"
               aria-label={`${speaker.name} on LinkedIn`}
-              className="text-ink-muted hover:text-neon-teal relative z-10 transition-colors"
+              className="text-ink-muted hover:text-pg-blue relative z-10"
             >
               <LinkedInIcon className="size-4" />
             </a>
@@ -80,12 +73,12 @@ export function SpeakerCard({
               target="_blank"
               rel="noopener noreferrer"
               aria-label={`${speaker.name} on X`}
-              className="text-ink-muted hover:text-neon-teal relative z-10 transition-colors"
+              className="text-ink-muted hover:text-pg-blue relative z-10"
             >
               <XIcon className="size-4" />
             </a>
           )}
-          <span className="text-ink-muted group-hover:text-neon-teal ml-auto text-xs font-medium transition-colors">
+          <span className="text-ink-muted group-hover:text-pg-blue ml-auto text-xs font-medium">
             View profile →
           </span>
         </div>

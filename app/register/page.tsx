@@ -3,7 +3,6 @@ import { siteConfig } from "@/lib/config";
 import { PageHero } from "@/components/ui/page-hero";
 import { Section } from "@/components/ui/section";
 import { RegisterForm } from "@/components/register/register-form";
-import { Reveal } from "@/components/ui/reveal";
 
 export const metadata: Metadata = {
   title: "Register to Attend",
@@ -23,9 +22,7 @@ export default function RegisterPage() {
 
       <Section>
         {registration.open ? (
-          <Reveal>
-            <RegisterForm />
-          </Reveal>
+          <RegisterForm />
         ) : (
           <div className="card mx-auto max-w-xl p-8 text-center sm:p-10">
             <h2 className="font-display text-ink text-2xl font-bold">Registration is closed</h2>

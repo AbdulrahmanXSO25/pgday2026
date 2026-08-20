@@ -3,14 +3,14 @@ import type { AnchorHTMLAttributes, ButtonHTMLAttributes, ReactNode } from "reac
 import { cn } from "@/lib/utils";
 
 const baseStyles =
-  "inline-flex items-center justify-center gap-2 rounded-full font-medium transition-all duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neon-teal disabled:pointer-events-none disabled:opacity-50";
+  "inline-flex items-center justify-center gap-2 rounded-sm border font-medium transition-colors duration-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-pg-blue disabled:pointer-events-none disabled:opacity-50";
 
 const variantStyles = {
   primary:
-    "bg-neon-teal text-void px-6 py-3 text-sm font-semibold shadow-[0_0_18px_rgb(46_230_210/0.25)] hover:shadow-[0_0_24px_rgb(46_230_210/0.4)] hover:brightness-110 active:scale-[0.98]",
+    "border-pg-blue-dark bg-pg-blue px-5 py-2 text-sm font-semibold text-white hover:bg-pg-blue-dark active:bg-pg-blue-dark",
   secondary:
-    "border border-hairline bg-transparent text-ink px-6 py-3 text-sm font-semibold hover:border-neon-teal/70 hover:text-neon-teal active:scale-[0.98]",
-  ghost: "text-ink-muted hover:text-neon-teal px-2 py-1 text-sm",
+    "border-hairline bg-surface px-5 py-2 text-sm font-semibold text-pg-blue hover:border-pg-blue hover:text-pg-blue-dark",
+  ghost: "border-transparent bg-transparent px-2 py-1 text-sm text-ink-muted hover:text-pg-blue",
 } as const;
 
 type Variant = keyof typeof variantStyles;

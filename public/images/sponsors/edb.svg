@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 60" role="img" aria-label="EDB placeholder logo">
-  <circle cx="34" cy="30" r="16" fill="none" stroke="#8B98A9" stroke-width="3"/>
-  <path d="M26 34c3 4 6 6 9 6 6 0 10-4 10-10s-4-10-10-10c-2.2 0-4.2.7-5.8 1.9" fill="none" stroke="#8B98A9" stroke-width="3" stroke-linecap="round"/>
-  <text x="60" y="37" font-family="monospace" font-size="24" font-weight="bold" fill="#8B98A9">EDB</text>
+  <circle cx="34" cy="30" r="16" fill="none" stroke="#4A5A66" stroke-width="3"/>
+  <path d="M26 34c3 4 6 6 9 6 6 0 10-4 10-10s-4-10-10-10c-2.2 0-4.2.7-5.8 1.9" fill="none" stroke="#4A5A66" stroke-width="3" stroke-linecap="round"/>
+  <text x="60" y="37" font-family="monospace" font-size="24" font-weight="bold" fill="#4A5A66">EDB</text>
 </svg>

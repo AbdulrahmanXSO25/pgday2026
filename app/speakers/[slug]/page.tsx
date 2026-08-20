@@ -47,7 +47,7 @@ export default async function SpeakerDetailPage({ params }: { params: Promise<{ 
       <Section className="pb-6">
         <Link
           href="/speakers"
-          className="mono-data text-ink-muted hover:text-neon-teal inline-flex items-center gap-2 transition-colors"
+          className="mono-data text-ink-muted hover:text-pg-blue inline-flex items-center gap-2 transition-colors"
         >
           <ArrowLeft aria-hidden="true" className="size-4" />$ cd ../speakers
         </Link>
@@ -76,7 +76,7 @@ export default async function SpeakerDetailPage({ params }: { params: Promise<{ 
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label={`${speaker.name} on LinkedIn`}
-                  className="border-hairline text-ink-muted hover:border-neon-teal/60 hover:text-neon-teal rounded-lg border p-2.5 transition-colors"
+                  className="border-hairline text-ink-muted hover:border-pg-blue hover:text-pg-blue rounded-sm border p-2.5 transition-colors"
                 >
                   <LinkedInIcon className="size-4" />
                 </a>
@@ -87,7 +87,7 @@ export default async function SpeakerDetailPage({ params }: { params: Promise<{ 
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label={`${speaker.name} on X`}
-                  className="border-hairline text-ink-muted hover:border-neon-teal/60 hover:text-neon-teal rounded-lg border p-2.5 transition-colors"
+                  className="border-hairline text-ink-muted hover:border-pg-blue hover:text-pg-blue rounded-sm border p-2.5 transition-colors"
                 >
                   <XIcon className="size-4" />
                 </a>
@@ -120,7 +120,7 @@ export default async function SpeakerDetailPage({ params }: { params: Promise<{ 
 
             {session && (
               <div className="card mt-10 p-6">
-                <p className="mono-data text-neon-teal">
+                <p className="mono-data text-pg-blue">
                   -- session · {session.start}–{session.end}
                 </p>
                 <h2 className="font-display text-ink mt-2 text-xl font-semibold">

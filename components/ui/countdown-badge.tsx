@@ -25,26 +25,13 @@ export function CountdownBadge({ dateISO, className }: { dateISO: string; classN
   }, [dateISO]);
 
   return (
-    <span
-      className={cn(
-        "mono-data border-hairline bg-surface text-ink-muted inline-flex items-center gap-2 rounded-full border px-3.5 py-1.5",
-        className
-      )}
-    >
+    <span className={cn("mono-data text-pg-blue inline-block", className)}>
       {days === null ? (
-        <span className="text-neon-teal">days_remaining: --</span>
+        "days_remaining: --"
       ) : days > 0 ? (
-        <>
-          <span className="text-neon-teal">days_remaining: {days}</span>
-          {days <= 30 && (
-            <span
-              aria-hidden="true"
-              className="bg-neon-amber size-1.5 animate-pulse rounded-full"
-            />
-          )}
-        </>
+        <>days_remaining: {days}</>
       ) : (
-        <span className="text-neon-amber">-- event day --</span>
+        <span className="text-pg-amber">-- event day --</span>
       )}
     </span>
   );

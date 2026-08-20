@@ -23,10 +23,10 @@ export function Header() {
   const isActive = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
 
   return (
-    <header className="border-hairline bg-void/85 sticky top-0 z-50 border-b backdrop-blur-md">
+    <header className="border-hairline bg-surface sticky top-0 z-50 border-b">
       <nav
         aria-label="Main"
-        className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between px-5 sm:px-8"
+        className="mx-auto flex h-14 w-full max-w-6xl items-center justify-between px-5 sm:px-8"
       >
         <Logo />
 
@@ -37,10 +37,10 @@ export function Header() {
                 href={link.href}
                 aria-current={isActive(link.href) ? "page" : undefined}
                 className={cn(
-                  "rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                  "px-3 py-2 text-sm",
                   isActive(link.href)
-                    ? "text-neon-teal decoration-neon-teal/70 underline underline-offset-8"
-                    : "text-ink-muted hover:text-ink"
+                    ? "text-pg-blue decoration-pg-blue/60 font-semibold underline underline-offset-4"
+                    : "text-ink hover:text-pg-blue"
                 )}
               >
                 {link.label}
@@ -53,8 +53,8 @@ export function Header() {
           <Link
             href="/register"
             className={cn(
-              "bg-neon-teal text-void inline-flex items-center rounded-full px-5 py-2 text-sm font-semibold transition-all hover:shadow-[0_0_20px_rgb(46_230_210/0.4)]",
-              pathname === "/register" && "ring-neon-teal/50 ring-offset-void ring-2 ring-offset-2"
+              "border-pg-blue bg-pg-blue hover:bg-pg-blue-dark inline-flex items-center rounded-sm border px-4 py-1.5 text-sm font-semibold text-white transition-colors",
+              pathname === "/register" && "ring-pg-blue/30 ring-offset-surface ring-2 ring-offset-2"
             )}
           >
             Register
@@ -67,14 +67,14 @@ export function Header() {
           aria-expanded={open}
           aria-controls="mobile-menu"
           aria-label={open ? "Close menu" : "Open menu"}
-          className="text-ink-muted hover:text-ink rounded-md p-2 md:hidden"
+          className="text-ink-muted hover:text-ink rounded-sm p-2 md:hidden"
         >
           {open ? <X className="size-5" /> : <Menu className="size-5" />}
         </button>
       </nav>
 
       {open && (
-        <div id="mobile-menu" className="border-hairline bg-void border-t md:hidden">
+        <div id="mobile-menu" className="border-hairline bg-surface border-t md:hidden">
           <ul className="mx-auto flex w-full max-w-6xl flex-col gap-1 px-5 py-4">
             {mainLinks.map((link) => (
               <li key={link.href}>
@@ -83,10 +83,10 @@ export function Header() {
                   onClick={() => setOpen(false)}
                   aria-current={isActive(link.href) ? "page" : undefined}
                   className={cn(
-                    "block rounded-md px-3 py-2.5 text-base font-medium",
+                    "block px-3 py-2 text-base",
                     isActive(link.href)
-                      ? "bg-surface-raised text-neon-teal"
-                      : "text-ink-muted hover:text-ink"
+                      ? "bg-surface-raised text-pg-blue font-semibold"
+                      : "text-ink hover:text-pg-blue"
                   )}
                 >
                   {link.label}
@@ -97,7 +97,7 @@ export function Header() {
               <Link
                 href="/register"
                 onClick={() => setOpen(false)}
-                className="bg-neon-teal text-void block rounded-full px-5 py-2.5 text-center text-base font-semibold"
+                className="border-pg-blue bg-pg-blue block rounded-sm border px-5 py-2 text-center text-base font-semibold text-white"
               >
                 Register to Attend
               </Link>

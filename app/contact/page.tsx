@@ -74,10 +74,7 @@ export default function ContactPage() {
                 rel={channel.href.startsWith("mailto:") ? undefined : "noopener noreferrer"}
                 className="card card-hover flex h-full items-start gap-4 p-6"
               >
-                <channel.icon
-                  aria-hidden="true"
-                  className="text-neon-teal mt-0.5 size-5 shrink-0"
-                />
+                <channel.icon aria-hidden="true" className="text-pg-blue mt-0.5 size-5 shrink-0" />
                 <span className="min-w-0">
                   <span className="mono-data text-ink-muted block">{channel.label}</span>
                   <span className="text-ink mt-1 block text-sm font-semibold break-words">

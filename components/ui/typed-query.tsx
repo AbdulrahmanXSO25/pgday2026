@@ -49,12 +49,12 @@ export function TypedQuery({ className }: { className?: string }) {
     >
       {lines.map((line, idx) => (
         <div key={idx} className="whitespace-pre-wrap">
-          {idx === 0 && <span className="text-neon-teal">{"> "}</span>}
+          {idx === 0 && <span className="text-pg-blue">{"> "}</span>}
           <span className="text-ink">{line}</span>
           {idx === lines.length - 1 && (
             <span
               aria-hidden="true"
-              className="bg-neon-teal animate-blink ml-0.5 inline-block h-[1.05em] w-[0.6em] translate-y-[0.2em]"
+              className="bg-pg-blue animate-blink ml-0.5 inline-block h-[1.05em] w-[0.6em] translate-y-[0.2em]"
             />
           )}
         </div>
