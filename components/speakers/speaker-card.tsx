@@ -39,7 +39,7 @@ export function SpeakerCard({
       </Link>
 
       <div className="flex flex-1 flex-col p-4">
-        <h3 className="text-ink text-base font-bold">
+        <h3 className="text-base font-bold">
           <Link href={`/speakers/${speaker.id}`} className="hover:text-pg-blue">
             <span aria-hidden="true" className="absolute inset-0" />
             {speaker.name}

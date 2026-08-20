@@ -21,7 +21,7 @@ export function SponsorTier({ tier, sponsors }: { tier: SponsorTier; sponsors: S
 
   return (
     <div className="mb-10 last:mb-0">
-      <h3 className="mono-data border-hairline text-ink-muted mb-4 border-b pb-2">
+      <h3 className="mono-data border-hairline -muted mb-4 border-b pb-2">
         <span className="text-pg-blue">--</span> {sponsorTierLabels[tier]}
       </h3>
       <ul className={cn("grid items-center", tierCols[tier])}>

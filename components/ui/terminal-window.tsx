@@ -15,8 +15,8 @@ export function TerminalWindow({
 }) {
   return (
     <div className={cn("border-hairline bg-surface border", className)}>
-      <div className="border-hairline bg-surface-raised flex items-center gap-2 border-b px-3 py-1.5">
-        <span aria-hidden="true" className="mono-data text-ink-muted">
+      <div className="bg-pg-blue border-pg-blue flex items-center gap-2 border-b px-3 py-1.5">
+        <span aria-hidden="true" className="mono-data text-white">
           {title}
         </span>
       </div>

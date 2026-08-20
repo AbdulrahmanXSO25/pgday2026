@@ -35,7 +35,7 @@ export default function SponsorsPage() {
         )}
 
         <div className="card mt-14 p-8 text-center sm:p-10">
-          <h2 className="font-display text-ink text-2xl font-bold">
+          <h2 className="font-display text-2xl font-bold">
             Interested in sponsoring PG Day Egypt?
           </h2>
           <p className="text-ink-muted mx-auto mt-3 max-w-xl leading-relaxed">

@@ -28,7 +28,7 @@ export default function VenuePage() {
 
       <Section>
         <div className="card p-8 sm:p-10">
-          <h2 className="font-display text-ink text-2xl font-bold">Venue: To be announced</h2>
+          <h2 className="font-display text-2xl font-bold">Venue: To be announced</h2>
           <p className="text-ink-muted mt-3 max-w-2xl leading-relaxed">
             We&apos;re working to confirm a venue in Cairo that fits the size and spirit of a
             first-edition community conference. Register now to be notified the moment details go

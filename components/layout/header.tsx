@@ -23,7 +23,7 @@ export function Header() {
   const isActive = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
 
   return (
-    <header className="border-hairline bg-surface sticky top-0 z-50 border-b">
+    <header className="bg-surface border-pg-blue sticky top-0 z-50 border-b-2">
       <nav
         aria-label="Main"
         className="mx-auto flex h-14 w-full max-w-6xl items-center justify-between px-5 sm:px-8"

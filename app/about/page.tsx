@@ -41,9 +41,7 @@ export default function AboutPage() {
               for first-time speakers and first-time conference-goers alike.
             </p>
 
-            <h2 className="font-display text-ink mt-12 text-2xl font-bold">
-              Why PostgreSQL, why now
-            </h2>
+            <h2 className="font-display mt-12 text-2xl font-bold">Why PostgreSQL, why now</h2>
             <p className="text-ink-muted mt-4 text-base leading-relaxed">
               PostgreSQL has become the world&apos;s most loved database — the default choice for
               startups, the migration target for enterprises leaving legacy commercial systems, and
@@ -57,7 +55,7 @@ export default function AboutPage() {
 
           <div>
             <aside className="card p-7">
-              <h2 className="font-display text-ink text-xl font-bold">Who should attend</h2>
+              <h2 className="font-display text-xl font-bold">Who should attend</h2>
               <ul className="mt-5 space-y-3.5">
                 {audience.map((item) => (
                   <li
@@ -105,7 +103,7 @@ export default function AboutPage() {
             <div key={value.title}>
               <article className="card card-hover h-full p-6">
                 <p className="mono-data text-pg-blue">{`0${i + 1}`}</p>
-                <h3 className="font-display text-ink mt-3 text-lg font-semibold">{value.title}</h3>
+                <h3 className="font-display mt-3 text-lg font-semibold">{value.title}</h3>
                 <p className="text-ink-muted mt-2.5 text-sm leading-relaxed">{value.body}</p>
               </article>
             </div>

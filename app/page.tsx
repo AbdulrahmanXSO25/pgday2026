@@ -68,7 +68,7 @@ export default function HomePage() {
         <div className="mx-auto grid w-full max-w-6xl items-center gap-10 px-5 pt-12 pb-14 sm:px-8 sm:pt-16 lg:grid-cols-[1.1fr_1fr] lg:gap-14">
           <div>
             {features.showCountdown && <CountdownBadge dateISO={event.date} className="mb-5" />}
-            <h1 className="text-ink text-4xl leading-tight font-bold tracking-tight sm:text-5xl">
+            <h1 className="text-4xl leading-tight font-bold tracking-tight sm:text-5xl">
               {event.name}
             </h1>
             <p className="text-ink-muted mt-3 max-w-xl text-lg leading-relaxed">
@@ -116,7 +116,7 @@ export default function HomePage() {
               key={fact.k}
               className="border-hairline border-t px-2 py-4 text-center md:border-t-0"
             >
-              <p className="text-ink text-base">{fact.v}</p>
+              <p className="text-pg-blue text-base font-semibold">{fact.v}</p>
               <p className="text-ink-muted mt-0.5 text-[10px] uppercase">{fact.k}</p>
             </div>
           ))}
@@ -199,7 +199,7 @@ export default function HomePage() {
       {/* 7. Final CTA band */}
       <Section>
         <div className="card p-8 text-center sm:p-12">
-          <h2 className="text-ink text-2xl font-bold tracking-tight sm:text-3xl">
+          <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">
             Free to attend. Registration required.
           </h2>
           <p className="text-ink-muted mx-auto mt-3 max-w-xl">

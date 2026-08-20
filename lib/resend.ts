@@ -3,7 +3,7 @@ import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { siteConfig } from "@/lib/config";
 
 const theme = {
-  bg: "#F7F9FA",
+  bg: "#EAF0F5",
   surface: "#FFFFFF",
   surfaceRaised: "#EEF2F5",
   hairline: "#D7DEE4",
@@ -160,7 +160,7 @@ export function buildHtmlEmail(input: { name: string; siteUrl: string }): string
                   font-size:24px;
                   line-height:1.3;
                   font-weight:700;
-                  color:${theme.ink};
+                  color:${theme.blue};
                 ">Thanks for registering, ${firstName}!</h1>
 
                 <p style="

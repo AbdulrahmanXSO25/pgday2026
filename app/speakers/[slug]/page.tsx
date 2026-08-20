@@ -96,7 +96,7 @@ export default async function SpeakerDetailPage({ params }: { params: Promise<{ 
           </div>
 
           <div>
-            <h1 className="font-display text-ink text-4xl font-bold tracking-tight sm:text-5xl">
+            <h1 className="font-display text-4xl font-bold tracking-tight sm:text-5xl">
               {speaker.name}
             </h1>
             <p className="mono-data text-ink-muted mt-3">
@@ -123,9 +123,7 @@ export default async function SpeakerDetailPage({ params }: { params: Promise<{ 
                 <p className="mono-data text-pg-blue">
                   -- session · {session.start}–{session.end}
                 </p>
-                <h2 className="font-display text-ink mt-2 text-xl font-semibold">
-                  {session.title}
-                </h2>
+                <h2 className="font-display mt-2 text-xl font-semibold">{session.title}</h2>
                 {session.abstract && (
                   <p className="text-ink-muted mt-3 text-sm leading-relaxed">{session.abstract}</p>
                 )}

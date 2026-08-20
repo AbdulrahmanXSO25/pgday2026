@@ -112,7 +112,7 @@ export default function CodeOfConductPage() {
 function CoCSection({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section>
-      <h2 className="font-display text-ink text-xl font-bold">
+      <h2 className="font-display text-xl font-bold">
         <span className="mono-data text-pg-blue mr-3">--</span>
         {title}
       </h2>

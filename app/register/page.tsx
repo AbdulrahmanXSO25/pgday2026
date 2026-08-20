@@ -25,7 +25,7 @@ export default function RegisterPage() {
           <RegisterForm />
         ) : (
           <div className="card mx-auto max-w-xl p-8 text-center sm:p-10">
-            <h2 className="font-display text-ink text-2xl font-bold">Registration is closed</h2>
+            <h2 className="font-display text-2xl font-bold">Registration is closed</h2>
             <p className="text-ink-muted mt-3 leading-relaxed">{registration.closedMessage}</p>
           </div>
         )}

@@ -34,9 +34,7 @@ export default function OrganizersPage() {
                       .join("")}
                   </div>
                   <div>
-                    <h2 className="font-display text-ink text-lg font-semibold">
-                      {organizer.name}
-                    </h2>
+                    <h2 className="font-display text-lg font-semibold">{organizer.name}</h2>
                     <p className="mono-data text-ink-muted">{organizer.role}</p>
                   </div>
                 </div>

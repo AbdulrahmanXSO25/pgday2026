@@ -123,7 +123,7 @@ export function RegisterForm() {
     return (
       <div role="status" className="card mx-auto max-w-xl p-8 text-center sm:p-10">
         <CheckCircle2 aria-hidden="true" className="text-pg-blue mx-auto size-12" />
-        <h2 className="font-display text-ink mt-5 text-2xl font-bold">You&apos;re registered!</h2>
+        <h2 className="font-display mt-5 text-2xl font-bold">You&apos;re registered!</h2>
         <p className="text-ink-muted mt-3 leading-relaxed">
           Check your email for a confirmation from us. We&apos;ll follow up closer to the event with
           final attendance details.

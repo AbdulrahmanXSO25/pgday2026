@@ -39,7 +39,7 @@ export function ScheduleRow({
           <h3
             className={cn(
               "text-base leading-snug font-semibold sm:text-lg",
-              isLogistics ? "text-ink-muted" : "text-ink"
+              isLogistics ? "text-ink-muted" : "text-pg-blue"
             )}
           >
             {session.title}
