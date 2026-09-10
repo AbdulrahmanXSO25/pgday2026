@@ -1,0 +1,65 @@
+@import "@pgegypt/ui/tokens.css";
+
+@layer base {
+  html {
+    color-scheme: light;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background-color: var(--bg-page);
+    color: var(--text-primary);
+    font-family: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  a {
+    color: var(--pg-blue);
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    color: var(--pg-blue);
+  }
+
+  ::selection {
+    background-color: rgb(51 103 145 / 0.18);
+    color: var(--text-primary);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--pg-blue);
+    outline-offset: 2px;
+  }
+}
+
+@layer components {
+  .card {
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border-hairline);
+  }
+
+  .card-hover {
+    transition:
+      border-color 120ms ease,
+      background-color 120ms ease;
+  }
+
+  .card-hover:hover {
+    border-color: var(--pg-blue);
+    background-color: var(--bg-raised);
+  }
+}
+
+@layer utilities {
+  /* Small section/field labels — same Inter stack as the rest of the panel */
+  .admin-label {
+    font-family: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+}

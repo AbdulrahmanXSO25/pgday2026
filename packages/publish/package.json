@@ -1,0 +1,24 @@
+{
+  "name": "@pgegypt/publish",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "lint": "eslint src || true",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --reporter=verbose",
+    "build": "tsc --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "zod": "^4.4.3",
+    "drizzle-orm": "^0.38.3",
+    "@pgegypt/db": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.2"
+  }
+}

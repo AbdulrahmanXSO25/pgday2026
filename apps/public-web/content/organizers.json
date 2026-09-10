@@ -1,0 +1,42 @@
+[
+  {
+    "id": "ahmed-zaki",
+    "name": "Ahmed Zaki",
+    "role": "Lead Organizer",
+    "bio": "Backend engineer and long-time PostgreSQL contributor kicking off the Egypt community.",
+    "social": {
+      "linkedin": null,
+      "twitter": null
+    }
+  },
+  {
+    "id": "heba-mansour",
+    "name": "Heba Mansour",
+    "role": "Community Chair",
+    "bio": "Runs the local PostgreSQL meetup and leads speaker outreach for the conference.",
+    "social": {
+      "linkedin": null,
+      "twitter": null
+    }
+  },
+  {
+    "id": "tarek-ibrahim",
+    "name": "Tarek Ibrahim",
+    "role": "Sponsorship Lead",
+    "bio": "Handles sponsor relationships and partnerships for PG Day Egypt.",
+    "social": {
+      "linkedin": null,
+      "twitter": null
+    }
+  },
+  {
+    "id": "rana-fathy",
+    "name": "Rana Fathy",
+    "role": "Volunteer Coordinator",
+    "bio": "Coordinates the on-the-ground volunteer team making event day run smoothly.",
+    "social": {
+      "linkedin": null,
+      "twitter": null
+    }
+  }
+]

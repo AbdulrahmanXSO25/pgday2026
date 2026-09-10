@@ -1,0 +1,40 @@
+{
+  "name": "@pgegypt/public-web",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev -p 3000",
+    "build": "next build",
+    "start": "next start -p 3000",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf .next .open-next out",
+    "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
+    "deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy"
+  },
+  "dependencies": {
+    "next": "^16.3.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "lucide-react": "^0.544.0",
+    "clsx": "^2.1.1",
+    "tailwind-merge": "^3.0.2",
+    "zod": "^4.4.3",
+    "@pgegypt/ui": "workspace:*",
+    "@pgegypt/validation": "workspace:*",
+    "@pgegypt/types": "workspace:*",
+    "@pgegypt/config": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.0",
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "typescript": "^5.9.2",
+    "tailwindcss": "^4.3.3",
+    "@tailwindcss/postcss": "^4.3.3",
+    "postcss": "^8.5.1",
+    "eslint": "^9.20.0",
+    "eslint-config-next": "^16.3.0",
+    "@eslint/eslintrc": "^3.2.0"
+  }
+}

@@ -1,0 +1,24 @@
+# §33.2 — CI on every PR: lint, typecheck, unit+integration tests, build.
+# Runs entirely against the LOCAL sqlite adapter + temp DB files — no Cloudflare
+# account, credentials, or tooling required on a PR.
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.12.3
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm turbo run lint typecheck test build

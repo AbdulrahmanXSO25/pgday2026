@@ -1,0 +1,31 @@
+{
+  "name": "@pgegypt/ui",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./tokens.css": "./src/tokens.css"
+  },
+  "scripts": {
+    "lint": "eslint src --ext .ts,.tsx || true",
+    "typecheck": "tsc --noEmit",
+    "build": "tsc --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "clsx": "^2.1.1",
+    "tailwind-merge": "^3.0.2",
+    "lucide-react": "^0.544.0",
+    "react": "^19.2.0",
+    "next": "^16.3.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.2",
+    "@types/react": "^19.2.0"
+  },
+  "peerDependencies": {
+    "react": "^19.0.0",
+    "next": "^16.0.0"
+  }
+}

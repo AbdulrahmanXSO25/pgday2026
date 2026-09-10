@@ -1,0 +1,24 @@
+{
+  "name": "@pgegypt/auth",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./hash": "./src/hash.ts",
+    "./session": "./src/session.ts"
+  },
+  "dependencies": {
+    "hash-wasm": "^4.12.0"
+  },
+  "scripts": {
+    "lint": "eslint src || true",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --reporter=verbose",
+    "build": "tsc --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.2"
+  }
+}
