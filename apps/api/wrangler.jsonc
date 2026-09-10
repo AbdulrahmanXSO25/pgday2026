@@ -1,0 +1,31 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "pgegypt-api",
+  "main": "src/worker.ts",
+  "compatibility_date": "2026-08-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "vars": {
+    "RUNTIME": "production",
+    "API_BASE_URL": "https://api.pgegypt.org"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "pgegypt-db",
+      "database_id": "ec83ec7f-52bb-4428-8575-46f3a364ca4d",
+      "migrations_dir": "../../migrations"
+    }
+  ],
+  "r2_buckets": [
+    {
+      "binding": "R2_BUCKET",
+      "bucket_name": "pgegypt-media"
+    }
+  ],
+  "queues": {
+    "producers": [{ "binding": "QUEUE", "queue": "pgegypt-email" }],
+    "consumers": [{ "queue": "pgegypt-email", "max_batch_size": 10, "max_batch_timeout": 5 }]
+  },
+  "observability": { "enabled": true },
+  "upload_source_maps": true
+}

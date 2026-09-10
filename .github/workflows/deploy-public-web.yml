@@ -1,0 +1,49 @@
+# §33.4 — deploy public-web. Two triggers, same job body:
+# - push to main (code change) → rebuild using committed content/*.json
+# - repository_dispatch (publish) → fetch latest snapshot from R2 first, then build+deploy
+name: deploy-public-web
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "apps/public-web/**"
+      - "packages/ui/**"
+      - "packages/validation/**"
+  repository_dispatch:
+    types: [publish]
+
+jobs:
+  build-and-deploy:
+    environment: production
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.12.3
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      # On a publish trigger, overwrite committed content with the published snapshot from R2
+      - name: Fetch content snapshot (publish trigger)
+        if: github.event_name == 'repository_dispatch'
+        env:
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          R2_ENDPOINT: ${{ secrets.R2_ENDPOINT }}
+        run: node scripts/fetch-content-snapshot.mjs
+      - run: pnpm turbo run build --filter=@pgegypt/public-web
+      - name: OpenNext build
+        working-directory: apps/public-web
+        run: pnpm exec opennextjs-cloudflare build
+      - name: noindex guard (§27.5)
+        run: node scripts/assert-no-noindex.mjs apps/public-web/.open-next/assets
+      - name: Deploy
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          workingDirectory: apps/public-web
+          command: deploy

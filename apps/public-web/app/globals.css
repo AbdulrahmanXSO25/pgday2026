@@ -1,0 +1,76 @@
+@import "@pgegypt/ui/tokens.css";
+
+@layer base {
+  html {
+    color-scheme: light;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background-color: var(--bg-page);
+    color: var(--text-primary);
+    font-family: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  a {
+    color: var(--pg-blue);
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    color: var(--pg-blue);
+  }
+
+  ::selection {
+    background-color: rgb(51 103 145 / 0.18);
+    color: var(--text-primary);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--pg-blue);
+    outline-offset: 2px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+@layer components {
+  .card {
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border-hairline);
+  }
+
+  .card-hover {
+    transition:
+      border-color 120ms ease,
+      background-color 120ms ease;
+  }
+
+  .card-hover:hover {
+    border-color: var(--pg-blue);
+    background-color: var(--bg-raised);
+  }
+}
+
+@layer utilities {
+  /* Mono "data" text: slightly smaller, wider tracking */
+  .mono-data {
+    font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+    font-size: 0.8125em;
+    letter-spacing: 0.05em;
+  }
+}

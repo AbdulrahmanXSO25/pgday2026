@@ -1,0 +1,32 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "dist",
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "target": "ES2022",
+    "lib": ["esnext"],
+    "strict": true,
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "declaration": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"],
+      "@pgegypt/validation": ["../../packages/validation/src/index.ts"],
+      "@pgegypt/types": ["../../packages/types/src/index.ts"],
+      "@pgegypt/config": ["../../packages/config/src/index.ts"],
+      "@pgegypt/db": ["../../packages/db/src/index.ts"],
+      "@pgegypt/auth": ["../../packages/auth/src/index.ts"],
+      "@pgegypt/queue": ["../../packages/queue/src/index.ts"],
+      "@pgegypt/mail": ["../../packages/mail/src/index.ts"],
+      "@pgegypt/storage": ["../../packages/storage/src/index.ts"],
+      "@pgegypt/publish": ["../../packages/publish/src/index.ts"],
+      "drizzle-orm": ["./node_modules/drizzle-orm"],
+      "drizzle-orm/*": ["./node_modules/drizzle-orm/*"],
+      "better-sqlite3": ["./node_modules/better-sqlite3"]
+    }
+  },
+  "include": ["src"],
+  "exclude": ["node_modules", "dist"]
+}

@@ -1,5 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 60" role="img" aria-label="Instabug placeholder logo">
-  <ellipse cx="30" cy="30" rx="16" ry="18" fill="none" stroke="#8B98A9" stroke-width="3"/>
-  <path d="M14 26h32M20 34h20" stroke="#8B98A9" stroke-width="2.5"/>
-  <text x="60" y="37" font-family="monospace" font-size="20" font-weight="bold" fill="#8B98A9">instabug</text>
-</svg>

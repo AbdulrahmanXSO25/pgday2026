@@ -1,16 +1,17 @@
 # dependencies
-/node_modules
+node_modules
 
 # next.js
-/.next/
+.next/
 /out/
 
 # opennext
-/.open-next/
-/.wrangler/
+.open-next/
+.wrangler/
 
 # production
-/build
+build/
+dist/
 
 # misc
 .DS_Store
@@ -33,3 +34,13 @@ next-env.d.ts
 # local tool artifacts
 shots/
 .playwright-mcp/
+coverage/
+playwright-report/
+test-results/
+content-published/
+.data/
+data/
+tmp/
+.tmp/
+.turbo/
+.opencode/
