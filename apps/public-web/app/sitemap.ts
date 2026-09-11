@@ -2,7 +2,7 @@ import type { MetadataRoute } from "next";
 import { siteConfig } from "@/lib/config";
 import { speakers } from "@/lib/content";
 
-const BASE_URL = "https://pgegypt.org";
+const BASE_URL = "https://2026day.pgegypt.org";
 
 export const dynamic = "force-static";
 

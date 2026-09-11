@@ -33,6 +33,8 @@ export type AppBindings = {
   R2_BUCKET?: unknown;
   QUEUE?: unknown;
   RUNTIME?: string;
+  GITHUB_DISPATCH_TOKEN?: string;
+  GITHUB_REPO?: string;
 };
 
 export type AppEnv = {

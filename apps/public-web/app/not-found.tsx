@@ -6,7 +6,7 @@ export default function NotFound() {
   return (
     <div className="relative flex min-h-[60vh] items-center justify-center px-5 py-20">
       <div className="w-full max-w-xl">
-        <TerminalWindow title="psql — pgegypt.org" className="mx-auto">
+        <TerminalWindow title="psql — 2026day.pgegypt.org" className="mx-auto">
           <pre className="text-ink font-mono text-sm leading-relaxed">
             <span className="text-pg-blue">pgegypt=# </span>
             <span className="text-ink">SELECT * FROM /{"{this-page}"};</span>

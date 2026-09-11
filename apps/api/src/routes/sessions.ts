@@ -1,13 +1,23 @@
 import { Hono } from "hono";
-import { eq, and, isNull, desc, inArray } from "drizzle-orm";
+import { eq, and, isNull, desc, inArray, like } from "drizzle-orm";
 import type { AppEnv } from "../app.js";
 import { validateJson } from "../lib/validate.js";
 import { requireAuth } from "../middleware/auth.js";
 import { requirePermission } from "../middleware/requirePermission.js";
 import { requireDb } from "../lib/db.js";
 import { ApiError } from "../middleware/errorHandler.js";
-import { sessions, sessionSpeakers, speakers, rooms, events } from "@pgegypt/db";
+import {
+  sessions,
+  sessionSpeakers,
+  speakers,
+  rooms,
+  events,
+  cfpSubmissions,
+  cfpSubmissionSpeakers,
+} from "@pgegypt/db";
 import type { Db } from "@pgegypt/db";
+import { createLocalEmailPipeline } from "../jobs/emailConsumer.js";
+import { resolveEmailQueue } from "../lib/queue.js";
 import {
   SessionCreateSchema,
   SessionUpdateSchema,
@@ -176,6 +186,130 @@ function enrichSessionWithSpeakers(
   speakerIds: string[]
 ): Record<string, unknown> {
   return { ...session, speakerIds };
+}
+
+// Best-effort local email pipeline for CFP approval emails (§19.3/§22.2) — never fails the request
+const { queue: sessionQueue, mailer: sessionMailer } = createLocalEmailPipeline();
+
+/**
+ * Best-effort CFP approval email with session details.
+ * Fires when a session that originated from a CFP submission is scheduled
+ * (room + time assigned). Never fails the request.
+ * Submission↔session mapping: promotion derives the session slug from the
+ * submission id (`{slugified-title}-{submissionId.slice(0,8)}`), so the slug
+ * suffix uniquely identifies the source submission — no schema change needed.
+ */
+export async function sendCfpApprovalEmail(
+  db: Db,
+  session: typeof sessions.$inferSelect,
+  deps: { queue?: typeof sessionQueue; mailer?: typeof sessionMailer; await?: boolean } = {}
+): Promise<void> {
+  const queue = deps.queue ?? sessionQueue;
+  const mailer = deps.mailer ?? sessionMailer;
+  const roomId = session.roomId;
+  const startsAtEpoch = session.startsAtEpoch;
+  const endsAtEpoch = session.endsAtEpoch;
+  if (!roomId || !startsAtEpoch || !endsAtEpoch) return;
+  const run = async (): Promise<void> => {
+    try {
+      // Session slug from promotion ends with the submission id prefix (first 8 hex chars)
+      const suffix = session.slug.split("-").pop() ?? "";
+      if (!/^[0-9a-f]{8}$/.test(suffix)) return;
+      const subs = (await selectAll(
+        db
+          .select()
+          .from(cfpSubmissions)
+          .where(like(cfpSubmissions.id, `${suffix}%`))
+      )) as Array<{ id: string; track?: string | null; level?: string | null }>;
+      const sub = subs[0];
+      if (!sub) return;
+
+      // Primary speaker from the submission
+      const subSpeakers = (await selectAll(
+        db
+          .select({
+            email: cfpSubmissionSpeakers.email,
+            name: cfpSubmissionSpeakers.name,
+            isPrimary: cfpSubmissionSpeakers.isPrimary,
+          })
+          .from(cfpSubmissionSpeakers)
+          .where(eq(cfpSubmissionSpeakers.submissionId, sub.id))
+      )) as Array<{ email: string; name: string; isPrimary: number }>;
+      const primary = subSpeakers.find((s) => s.isPrimary === 1) ?? subSpeakers[0];
+      if (!primary) return;
+
+      const roomRows = (await selectAll(
+        db.select({ name: rooms.name }).from(rooms).where(eq(rooms.id, roomId))
+      )) as Array<{ name: string }>;
+      const roomName = roomRows[0]?.name;
+
+      const tz = "Africa/Cairo";
+      const fmtDate = new Intl.DateTimeFormat("en-US", {
+        timeZone: tz,
+        weekday: "long",
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      });
+      const fmtTime = new Intl.DateTimeFormat("en-US", {
+        timeZone: tz,
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false,
+      });
+      const start = new Date(startsAtEpoch * 1000);
+      const end = new Date(endsAtEpoch * 1000);
+      const durationMin = Math.max(1, Math.round((endsAtEpoch - startsAtEpoch) / 60));
+
+      const job = {
+        type: "cfp_approval" as const,
+        to: primary.email,
+        name: primary.name || "there",
+        title: session.title,
+        session: {
+          date: fmtDate.format(start),
+          time: `${fmtTime.format(start)} – ${fmtTime.format(end)}`,
+          room: roomName,
+          track: sub?.track ?? undefined,
+          level: sub?.level ?? session.level ?? undefined,
+          duration: `${durationMin} min`,
+          talkType: session.type,
+        },
+        idempotencyKey: `cfp-approval:${primary.email.toLowerCase()}:${session.title}`,
+      };
+      if (queue && typeof queue.enqueue === "function") {
+        await queue.enqueue(job);
+      } else if (mailer && typeof mailer.send === "function") {
+        const { buildCfpApprovalEmail } = await import("@pgegypt/mail");
+        const siteUrl = process.env.SITE_URL ?? "https://2026day.pgegypt.org";
+        const tpl = buildCfpApprovalEmail({
+          name: primary.name || "there",
+          title: session.title,
+          siteUrl,
+          session: job.session,
+        });
+        const res = await mailer.send({
+          to: primary.email,
+          subject: tpl.subject,
+          html: tpl.html,
+          text: tpl.text,
+        });
+        if (!res.ok) console.error("[sessions] cfp approval email failed (non-fatal):", res.error);
+      }
+    } catch (err) {
+      console.error(
+        "[sessions] cfp approval email failed (non-fatal):",
+        err instanceof Error ? err.message : String(err)
+      );
+    }
+  };
+  // Production: fire-and-forget (never fails the request).
+  // Test injection (deps.await): await so tests can assert the job.
+  if (deps.await) {
+    await run();
+  } else {
+    void run();
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -821,6 +955,13 @@ export function sessionRoutes() {
     const updated = await selectOne<typeof sessions.$inferSelect>(
       db.select().from(sessions).where(eq(sessions.id, id))
     );
+    // §19.3/§22.2 — best-effort CFP approval email with session details when a
+    // CFP-originated session is scheduled (room + time assigned)
+    if (updated) {
+      await sendCfpApprovalEmail(db, updated, {
+        queue: resolveEmailQueue(c.env as never) ?? undefined,
+      });
+    }
     const sids = await getSpeakerIdsForSession(db, id);
     return c.json({
       success: true as const,

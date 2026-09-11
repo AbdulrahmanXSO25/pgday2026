@@ -3,10 +3,13 @@
   "name": "pgegypt-api",
   "main": "src/worker.ts",
   "compatibility_date": "2026-08-01",
-  "compatibility_flags": ["nodejs_compat"],
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
   "vars": {
     "RUNTIME": "production",
-    "API_BASE_URL": "https://api.pgegypt.org"
+    "API_BASE_URL": "https://api.pgegypt.org",
+    "SITE_URL": "https://2026day.pgegypt.org",
+    "EMAIL_FROM": "PG Day Egypt <noreply@pgegypt.org>",
+    "GITHUB_REPO": "AbdulrahmanXSO25/pgday2026"
   },
   "d1_databases": [
     {

@@ -2,7 +2,15 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { createLocalQueue } from "@pgegypt/queue";
 import { createMaildevMailer } from "@pgegypt/mail";
 import { createResendMailer } from "@pgegypt/mail";
-import { buildThankYouEmail, buildCfpStatusEmail } from "@pgegypt/mail";
+import {
+  buildThankYouEmail,
+  buildCfpStatusEmail,
+  buildRegistrationReceivedEmail,
+  buildRegistrationAcceptedEmail,
+  buildRegistrationRejectedEmail,
+  buildCfpReceivedEmail,
+  buildCfpApprovalEmail,
+} from "@pgegypt/mail";
 import { createEmailConsumer, handleEmailJob } from "../src/jobs/emailConsumer.js";
 import type { EmailJob } from "@pgegypt/queue";
 import { createApp } from "../src/app.js";
@@ -173,6 +181,62 @@ describe("Email + queue — §25", () => {
     expect(rejected.html).not.toContain("<try>");
   });
 
+  it("templates: all 5 professional PG-branded emails escape input and carry correct subjects", () => {
+    const received = buildRegistrationReceivedEmail({
+      name: "Eve <script>",
+      siteUrl: "https://pgegypt.org",
+    });
+    expect(received.subject).toContain("registered");
+    expect(received.html).toContain("Eve");
+    expect(received.html).not.toContain("<script>");
+    expect(received.html).not.toContain("SELECT");
+    expect(received.html).toContain("https://pgegypt.org/schedule");
+
+    const accepted = buildRegistrationAcceptedEmail({
+      name: "Eve",
+      siteUrl: "https://pgegypt.org",
+    });
+    expect(accepted.subject).toContain("confirmed");
+    expect(accepted.html).toContain("Confirmed");
+
+    const rejected = buildRegistrationRejectedEmail({
+      name: "Eve",
+      siteUrl: "https://pgegypt.org",
+    });
+    expect(rejected.subject.toLowerCase()).toContain("update");
+    expect(rejected.html).toContain("unable to confirm");
+
+    const cfpReceived = buildCfpReceivedEmail({
+      name: "Eve",
+      title: "Postgres <b>rocks</b>",
+      siteUrl: "https://pgegypt.org",
+    });
+    expect(cfpReceived.subject).toContain("received");
+    expect(cfpReceived.html).not.toContain("<b>rocks</b>");
+    expect(cfpReceived.html).toContain("Postgres");
+
+    const approval = buildCfpApprovalEmail({
+      name: "Eve",
+      title: "Postgres <b>rocks</b>",
+      siteUrl: "https://pgegypt.org",
+      session: {
+        date: "Saturday, October 10, 2026",
+        time: "14:00 – 14:45",
+        room: "Nile Hall",
+        track: "Core",
+        level: "Intermediate",
+        duration: "45 min",
+        talkType: "Talk",
+      },
+    });
+    expect(approval.subject).toContain("confirmed");
+    expect(approval.html).not.toContain("<b>rocks</b>");
+    expect(approval.html).toContain("Nile Hall");
+    expect(approval.html).toContain("14:00");
+    expect(approval.html).toContain("45 min");
+    expect(approval.text).toContain("Nile Hall");
+  });
+
   it("emailConsumer handles registration and CFP jobs via queue", async () => {
     const sent: Array<{ to: string; subject: string }> = [];
     const mailer = {
@@ -199,7 +263,7 @@ describe("Email + queue — §25", () => {
         to: "hank@example.com",
         name: "Hank",
         title: "My Talk",
-        status: "accepted",
+        status: "rejected",
         requestId: "req-2",
       },
       { idempotencyKey: "hank-cfp" }
@@ -208,8 +272,68 @@ describe("Email + queue — §25", () => {
     await new Promise((r) => setTimeout(r, 20));
     expect(sent).toHaveLength(2);
     expect(sent[0].to).toBe("gina@example.com");
-    expect(sent[1].subject.toLowerCase()).toContain("accepted");
+    expect(sent[1].subject.toLowerCase()).toContain("update");
     expect(mailer.send).toHaveBeenCalledTimes(2);
+  });
+
+  it("emailConsumer routes all 5 email types to the right templates", async () => {
+    const sent: Array<{ to: string; subject: string; html: string }> = [];
+    const mailer = {
+      send: vi.fn(async (p: { to: string; subject: string; html: string }) => {
+        sent.push(p);
+        return { ok: true as const };
+      }),
+    };
+    const consumer = createEmailConsumer({
+      mailer: mailer as unknown as import("@pgegypt/mail").Mailer,
+      siteUrl: "https://pgegypt.org",
+    });
+
+    // 1. CFP received
+    await handleEmailJob(
+      { type: "cfp_status", status: "submitted", to: "a@example.com", name: "A", title: "T1" },
+      mailer as unknown as import("@pgegypt/mail").Mailer,
+      "https://pgegypt.org"
+    );
+    // 2. Registration received
+    await handleEmailJob(
+      { type: "registration_thank_you", to: "b@example.com", name: "B" },
+      mailer as unknown as import("@pgegypt/mail").Mailer,
+      "https://pgegypt.org"
+    );
+    // 3. Registration acceptance
+    await handleEmailJob(
+      { type: "registration_acceptance", to: "c@example.com", name: "C" },
+      mailer as unknown as import("@pgegypt/mail").Mailer,
+      "https://pgegypt.org"
+    );
+    // 4. Registration rejection
+    await handleEmailJob(
+      { type: "registration_rejection", to: "d@example.com", name: "D" },
+      mailer as unknown as import("@pgegypt/mail").Mailer,
+      "https://pgegypt.org"
+    );
+    // 5. CFP approval with session details
+    await handleEmailJob(
+      {
+        type: "cfp_approval",
+        to: "e@example.com",
+        name: "E",
+        title: "T5",
+        session: { date: "Saturday, October 10, 2026", time: "14:00 – 14:45", room: "Nile Hall" },
+      },
+      mailer as unknown as import("@pgegypt/mail").Mailer,
+      "https://pgegypt.org"
+    );
+
+    expect(sent).toHaveLength(5);
+    expect(sent[0].subject).toContain("received");
+    expect(sent[1].subject).toContain("registered");
+    expect(sent[2].subject).toContain("confirmed");
+    expect(sent[3].subject.toLowerCase()).toContain("update");
+    expect(sent[4].subject).toContain("confirmed");
+    expect(sent[4].html).toContain("Nile Hall");
+    expect(sent[4].html).toContain("14:00");
   });
 
   it("handleEmailJob pure function works without queue", async () => {
@@ -221,6 +345,52 @@ describe("Email + queue — §25", () => {
     );
     expect(res.ok).toBe(true);
     expect(mailer.send).toHaveBeenCalledOnce();
+  });
+
+  it("production path: routes enqueue to the CF Queue binding when present", async () => {
+    // Simulate the Worker env: QUEUE binding present → registration + CFP
+    // submissions must enqueue to it (not the local Maildev pipeline).
+    const sentToQueue: Array<{ body: unknown }> = [];
+    const fakeBinding = {
+      send: async (body: unknown) => {
+        sentToQueue.push({ body });
+      },
+    };
+    const app = createApp({ db: undefined as never });
+    const regRes = await app.request(
+      "/v1/registrations",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: "Prod Path",
+          email: "prod-path@example.com",
+          consent: true,
+        }),
+      },
+      { QUEUE: fakeBinding } as never
+    );
+    // Registration requires a DB — without one it 500s, but the queue resolution
+    // must not throw. Use the health of the resolver directly instead:
+    expect(regRes.status).toBe(500); // no DB in this unit test — expected
+
+    // Direct resolver check: binding present → CF queue adapter returned
+    const { resolveEmailQueue } = await import("../src/lib/queue.js");
+    const q = resolveEmailQueue({ QUEUE: fakeBinding } as never);
+    expect(q).not.toBeNull();
+    const id = await q!.enqueue({
+      type: "registration_thank_you",
+      to: "prod@example.com",
+      name: "Prod",
+    });
+    expect(id).toBeTruthy();
+    expect(sentToQueue).toHaveLength(1);
+    const body = sentToQueue[0].body as { payload: { type: string } };
+    expect(body.payload.type).toBe("registration_thank_you");
+
+    // No binding → null (callers fall back to local pipeline)
+    expect(resolveEmailQueue(undefined)).toBeNull();
+    expect(resolveEmailQueue({} as never)).toBeNull();
   });
 
   it("secure headers present in API responses", async () => {

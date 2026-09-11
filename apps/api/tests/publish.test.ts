@@ -354,12 +354,12 @@ describe("PublishTarget interface — local vs R2 stub (§16)", () => {
     rmSync(tmp, { recursive: true, force: true });
   });
 
-  it("R2 stub returns not implemented error and local active in Phases 0-6", async () => {
+  it("R2 target requires a bucket binding, then a repo+token for dispatch", async () => {
     const r2 = createR2Target();
     expect(r2.kind).toBe("r2");
     const res = await r2.publish({ "site-config.json": {} });
     expect(res.ok).toBe(false);
-    expect(res.error).toMatch(/not implemented/i);
+    expect(res.error).toMatch(/R2_BUCKET/i);
     const health = await r2.healthCheck?.();
     expect(health?.ok).toBe(false);
 
@@ -369,6 +369,58 @@ describe("PublishTarget interface — local vs R2 stub (§16)", () => {
     expect(local.kind).toBe("local");
     const lh = await local.healthCheck?.();
     expect(lh?.ok).toBe(true);
+  });
+
+  it("R2 target writes snapshot keys and dispatches the rebuild event", async () => {
+    const putCalls: Array<{ key: string; body: string }> = [];
+    const fakeBucket = {
+      put: async (key: string, value: string) => {
+        putCalls.push({ key, body: value });
+      },
+    };
+    const fetchCalls: Array<{ url: string; init: RequestInit }> = [];
+    const realFetch = globalThis.fetch;
+    (globalThis as Record<string, unknown>).fetch = async (url: string, init: RequestInit) => {
+      fetchCalls.push({ url, init });
+      return new Response(null, { status: 204 });
+    };
+    try {
+      const r2 = createR2Target({ bucket: fakeBucket, repo: "owner/repo", token: "tok" });
+      const res = await r2.publish(
+        { "site-config.json": { event: { name: "x" } }, "speakers.json": [] },
+        { eventSlug: "pgegypt-2026" }
+      );
+      expect(res.ok).toBe(true);
+      expect(res.writtenFiles).toEqual(["site-config.json", "speakers.json"]);
+      expect(putCalls.map((c) => c.key).sort()).toEqual([
+        "content-snapshots/pgegypt-2026/latest/site-config.json",
+        "content-snapshots/pgegypt-2026/latest/speakers.json",
+      ]);
+      expect(JSON.parse(putCalls[0].body)).toEqual({ event: { name: "x" } });
+      expect(fetchCalls).toHaveLength(1);
+      expect(fetchCalls[0].url).toBe("https://api.github.com/repos/owner/repo/dispatches");
+      expect(JSON.parse(fetchCalls[0].init.body as string)).toEqual({ event_type: "publish" });
+      expect((fetchCalls[0].init.headers as Record<string, string>).Authorization).toBe(
+        "Bearer tok"
+      );
+    } finally {
+      globalThis.fetch = realFetch;
+    }
+  });
+
+  it("R2 target surfaces dispatch failures without hiding the snapshot state", async () => {
+    const fakeBucket = { put: async () => {} };
+    const realFetch = globalThis.fetch;
+    (globalThis as Record<string, unknown>).fetch = async () =>
+      new Response("boom", { status: 500 });
+    try {
+      const r2 = createR2Target({ bucket: fakeBucket, repo: "owner/repo", token: "tok" });
+      const res = await r2.publish({ "site-config.json": {} });
+      expect(res.ok).toBe(false);
+      expect(res.error).toMatch(/GitHub dispatch failed with HTTP 500/);
+    } finally {
+      globalThis.fetch = realFetch;
+    }
   });
 
   it("hashFilesSync is deterministic and sorted", async () => {
@@ -452,6 +504,49 @@ describe("POST /v1/publish — auth, RBAC, validation (§16)", () => {
       const body = (await res.json()) as Record<string, unknown>;
       expect(body.success).toBe(true);
       expect((body.data as Record<string, unknown>).contentHash).toBeTruthy();
+    }
+  });
+
+  it("uses the R2 target + GitHub dispatch when the Worker has an R2_BUCKET binding", async () => {
+    const app = createApp({ db: db as never });
+    const header = testUserHeader("SUPER_ADMIN", []);
+    const putKeys: string[] = [];
+    const fakeBucket = {
+      put: async (key: string, _value: string) => {
+        putKeys.push(key);
+      },
+    };
+    const realFetch = globalThis.fetch;
+    const dispatchCalls: Array<{ url: string; body: string }> = [];
+    (globalThis as Record<string, unknown>).fetch = async (
+      url: string,
+      init: { body?: string }
+    ) => {
+      dispatchCalls.push({ url, body: String(init.body ?? "") });
+      return new Response(null, { status: 204 });
+    };
+    try {
+      const res = await app.request(
+        "/v1/publish",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "X-Test-User": header },
+          body: JSON.stringify({}),
+        },
+        {
+          R2_BUCKET: fakeBucket,
+          GITHUB_REPO: "owner/repo",
+          GITHUB_DISPATCH_TOKEN: "tok",
+        } as never
+      );
+      expect(res.status).toBe(200);
+      const body = (await res.json()) as Record<string, unknown>;
+      expect(body.success).toBe(true);
+      expect(putKeys).toContain("content-snapshots/pgegypt-2026/latest/site-config.json");
+      expect(dispatchCalls).toHaveLength(1);
+      expect(dispatchCalls[0].url).toBe("https://api.github.com/repos/owner/repo/dispatches");
+    } finally {
+      globalThis.fetch = realFetch;
     }
   });
 

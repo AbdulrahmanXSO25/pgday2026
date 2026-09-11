@@ -519,6 +519,49 @@ describe("Check-in — opaque token, idempotent, RBAC §22", () => {
     });
     expect(chk.status).toBe(200);
   });
+
+  it("PATCH status declined/waitlisted updates status, audits, and never fails on email", async () => {
+    const regRes = await createRegistrationViaApi({
+      name: "Declined Dana",
+      email: "declined@example.com",
+      consent: true,
+    });
+    expect(regRes.status).toBe(201);
+    const id = ((await regRes.json()) as Record<string, unknown>).data as Record<string, unknown>;
+    const rid = id.id as string;
+    const app = createApp({ db: db as never });
+
+    // Declined — best-effort rejection email must not fail the request
+    const declined = await app.request(`/v1/registrations/${rid}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", "X-Test-User": REGISTRATIONS_WRITE },
+      body: JSON.stringify({ status: "declined" }),
+    });
+    expect(declined.status).toBe(200);
+    const drow = sqlite.prepare("SELECT status FROM registrations WHERE id=?").get(rid) as {
+      status: string;
+    };
+    expect(drow.status).toBe("declined");
+    const daudit = sqlite
+      .prepare(
+        "SELECT action, metadata FROM audit_logs WHERE target_id=? AND action='registration.status_changed'"
+      )
+      .get(rid) as { action: string; metadata: string } | undefined;
+    expect(daudit).toBeDefined();
+    expect(JSON.parse(daudit.metadata)).toMatchObject({ status: "declined" });
+
+    // Waitlisted — same path
+    const waitlisted = await app.request(`/v1/registrations/${rid}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", "X-Test-User": REGISTRATIONS_WRITE },
+      body: JSON.stringify({ status: "waitlisted" }),
+    });
+    expect(waitlisted.status).toBe(200);
+    const wrow = sqlite.prepare("SELECT status FROM registrations WHERE id=?").get(rid) as {
+      status: string;
+    };
+    expect(wrow.status).toBe("waitlisted");
+  });
 });
 
 // ---------------------------------------------------------------------------

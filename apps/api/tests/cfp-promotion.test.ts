@@ -397,6 +397,111 @@ describe("CFP promotion e2e — submit→under_review→accept→promote→verif
       .get(EVENT_ID) as { c: number };
     expect(afterSessions.c).toBe(1);
   });
+
+  it("scheduling a promoted session sends the CFP approval email with session details", async () => {
+    const app = createApp({ db: db as never });
+    const writer = testUserHeader("ADMIN", ["cfp:WRITE"]);
+    const scheduler = testUserHeader("ADMIN", ["schedule:WRITE"]);
+
+    // Full chain: submit → under_review → accepted → promote
+    const submissionId = await submitCfp("2.2.2.2", { submitterEmail: "approval@example.com" });
+    await app.request(`/v1/cfp/submissions/${submissionId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", "X-Test-User": writer },
+      body: JSON.stringify({ status: "under_review" }),
+    });
+    await app.request(`/v1/cfp/submissions/${submissionId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", "X-Test-User": writer },
+      body: JSON.stringify({ status: "accepted" }),
+    });
+    const promote = await app.request(`/v1/cfp/submissions/${submissionId}/promote`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-Test-User": writer },
+      body: JSON.stringify({}),
+    });
+    expect([200, 201].includes(promote.status)).toBe(true);
+
+    // Grab the promoted session row
+    const sessionRow = sqlite
+      .prepare("SELECT * FROM sessions WHERE event_id=? AND is_draft=1 LIMIT 1")
+      .get(EVENT_ID) as {
+      id: string;
+      slug: string;
+      title: string;
+      type: string;
+      level: string | null;
+    };
+
+    // Create a room
+    const roomId = "room_nile_hall";
+    sqlite
+      .prepare(
+        "INSERT OR IGNORE INTO rooms (id, event_id, slug, name, capacity, sort_order) VALUES (?, ?, 'nile-hall', 'Nile Hall', 300, 1)"
+      )
+      .run(roomId, EVENT_ID);
+
+    // Assign the slot via the schedule endpoint (room + time)
+    const slotRes = await app.request(`/v1/admin/schedule/${sessionRow.id}/slot`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", "X-Test-User": scheduler },
+      body: JSON.stringify({
+        roomId,
+        startsAtEpoch: 1791630000, // 2026-10-10 14:00 Africa/Cairo
+        endsAtEpoch: 1791632700, // 14:45
+      }),
+    });
+    expect(slotRes.status).toBe(200);
+
+    // The approval email is best-effort via the module-level pipeline — verify the
+    // mapping + payload logic directly with an injected mock queue.
+    const { sendCfpApprovalEmail } = await import("../src/routes/sessions.js");
+    const enqueued: Array<Record<string, unknown>> = [];
+    const mockQueue = {
+      enqueue: async (job: unknown) => {
+        enqueued.push(job as Record<string, unknown>);
+        return "id";
+      },
+    };
+    const updated = sqlite.prepare("SELECT * FROM sessions WHERE id=?").get(sessionRow.id) as {
+      id: string;
+      slug: string;
+      title: string;
+      type: string;
+      level: string | null;
+      room_id: string | null;
+      starts_at_epoch: number | null;
+      ends_at_epoch: number | null;
+    };
+    await sendCfpApprovalEmail(
+      db as never,
+      {
+        id: updated.id,
+        slug: updated.slug,
+        title: updated.title,
+        type: updated.type,
+        level: updated.level,
+        roomId: updated.room_id,
+        startsAtEpoch: updated.starts_at_epoch,
+        endsAtEpoch: updated.ends_at_epoch,
+      } as never,
+      { queue: mockQueue as never, await: true }
+    );
+
+    expect(enqueued).toHaveLength(1);
+    const job = enqueued[0];
+    expect(job.type).toBe("cfp_approval");
+    expect(job.to).toBe("approval@example.com"); // primary speaker = submitter (overridden email)
+    expect(job.title).toBe(sessionRow.title);
+    const session = job.session as Record<string, string>;
+    expect(session.room).toBe("Nile Hall");
+    expect(session.date).toContain("October 10, 2026");
+    expect(session.time).toContain("14:00");
+    expect(session.duration).toBe("45 min");
+    expect(session.track).toBe("postgres-internals");
+    expect(session.level).toBe("intermediate");
+    expect(session.talkType).toBe(sessionRow.type);
+  });
 });
 
 // ---------------------------------------------------------------------------

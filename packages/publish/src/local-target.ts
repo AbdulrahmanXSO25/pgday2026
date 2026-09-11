@@ -7,7 +7,12 @@
 
 import { mkdir, writeFile, access } from "node:fs/promises";
 import { join, dirname, resolve } from "node:path";
-import type { PublishTarget, PublishFiles, PublishWriteResult } from "./target.js";
+import type {
+  PublishTarget,
+  PublishFiles,
+  PublishWriteResult,
+  PublishTargetOptions,
+} from "./target.js";
 import { hashFiles } from "./target.js";
 
 export type LocalTargetOptions = {
@@ -33,7 +38,7 @@ export function createLocalTarget(options: LocalTargetOptions = {}): PublishTarg
   return {
     kind: "local",
 
-    async publish(files: PublishFiles): Promise<PublishWriteResult> {
+    async publish(files: PublishFiles, _opts?: PublishTargetOptions): Promise<PublishWriteResult> {
       if (!files || typeof files !== "object" || Object.keys(files).length === 0) {
         return { ok: false, target: "local", error: "No files to publish" };
       }

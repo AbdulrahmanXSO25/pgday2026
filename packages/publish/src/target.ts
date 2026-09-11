@@ -8,7 +8,6 @@
 export type PublishTargetKind = "local" | "r2";
 
 export type PublishFiles = Record<string, unknown>;
-
 export type PublishWriteResult = {
   ok: boolean;
   target: PublishTargetKind;
@@ -24,13 +23,19 @@ export interface PublishTarget {
    * Files keys are like "site-config.json", "speakers.json" etc.
    * Must be idempotent — overwriting with same content succeeds.
    */
-  publish(files: PublishFiles): Promise<PublishWriteResult>;
+  publish(files: PublishFiles, opts?: PublishTargetOptions): Promise<PublishWriteResult>;
 
   /**
    * Optional: check if target is available (e.g., fs writable / R2 creds present).
    */
   healthCheck?(): Promise<{ ok: boolean; message?: string }>;
 }
+
+/** Per-publish options passed through by the service (all optional, targets ignore what they don't need). */
+export type PublishTargetOptions = {
+  /** Event slug used in snapshot prefixes (R2 target). Defaults to "pgegypt-2026". */
+  eventSlug?: string;
+};
 
 /** Pure helper — deterministic SHA-256 hex of sorted JSON files map */
 export async function hashFiles(files: PublishFiles): Promise<string> {

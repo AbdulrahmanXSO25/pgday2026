@@ -5,6 +5,7 @@ import type { AppEnv } from "../app.js";
 import { getDb } from "../lib/db.js";
 import { ApiError } from "../middleware/errorHandler.js";
 import { hasPermission, type Permission } from "@pgegypt/auth";
+import { createR2Target, type R2BucketLike } from "@pgegypt/publish";
 import type { AuthUser } from "../middleware/auth.js";
 import * as publishService from "../services/publish.service.js";
 
@@ -108,12 +109,28 @@ export function publishRoutes() {
       body = undefined;
     }
     const eventId = resolveEventId(body);
+    // Production path: when the Worker has an R2_BUCKET binding, publish the
+    // snapshot to R2 and trigger the site rebuild via GitHub dispatch.
+    // Otherwise fall back to the local target (dev / tests).
+    const env = (c.env ?? {}) as {
+      R2_BUCKET?: R2BucketLike;
+      GITHUB_REPO?: string;
+      GITHUB_DISPATCH_TOKEN?: string;
+    };
+    const target = env.R2_BUCKET
+      ? createR2Target({
+          bucket: env.R2_BUCKET,
+          repo: env.GITHUB_REPO,
+          token: env.GITHUB_DISPATCH_TOKEN,
+        })
+      : undefined;
     const result = await publishService.publishContent({
       db,
       actorId: user?.id,
       ip: meta.ip,
       userAgent: meta.userAgent,
       eventId,
+      ...(target ? { target } : {}),
     });
     return c.json(
       {

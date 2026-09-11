@@ -15,7 +15,7 @@ import { createR2StorageFromEnv } from "@pgegypt/storage";
 export type WorkerEnv = {
   DB: D1DatabaseLike;
   R2_BUCKET?: unknown;
-  EMAIL_QUEUE?: { send: (msg: unknown) => Promise<void> };
+  QUEUE?: { send: (msg: unknown) => Promise<void> };
   RUNTIME?: string;
   S3_ENDPOINT?: string;
   S3_ACCESS_KEY_ID?: string;
@@ -64,7 +64,7 @@ export default {
     const mailer = createMailerFromEnv(env as unknown as Record<string, string>);
     await handleEmailBatch(batch.messages as Array<{ body: unknown; id?: string }>, {
       mailer,
-      siteUrl: (env as unknown as Record<string, string>).SITE_URL ?? "https://pgegypt.org",
+      siteUrl: (env as unknown as Record<string, string>).SITE_URL ?? "https://2026day.pgegypt.org",
     });
     void _ctx;
   },

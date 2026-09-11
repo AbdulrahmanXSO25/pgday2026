@@ -9,6 +9,6 @@ export default function robots(): MetadataRoute.Robots {
       allow: "/",
       disallow: ["/api/"],
     },
-    sitemap: "https://pgegypt.org/sitemap.xml",
+    sitemap: "https://2026day.pgegypt.org/sitemap.xml",
   };
 }
