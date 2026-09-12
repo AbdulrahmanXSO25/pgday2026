@@ -196,7 +196,7 @@ export default function CfpPage() {
                       </td>
                       <td className="px-4 py-3 text-right">
                         <Link
-                          href={`/cfp/${row.id}`}
+                          href={`/cfp/detail?id=${row.id}`}
                           className="text-pg-blue font-medium hover:underline"
                         >
                           Review →

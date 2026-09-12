@@ -57,7 +57,7 @@ export default function SchedulePage() {
         {rows.map((s) => (
           <li key={s.id}>
             <Link
-              href={`/sessions/${s.id}`}
+              href={`/sessions/edit?id=${s.id}`}
               className="card hover:border-pg-blue flex items-baseline gap-4 rounded-sm border p-4 transition-colors"
             >
               <span className="admin-label text-pg-blue w-24 shrink-0 text-xs">

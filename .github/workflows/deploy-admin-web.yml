@@ -1,5 +1,6 @@
-# §33.5 — deploy admin-web. Gated by the `production` GitHub Environment.
-# API_BASE_URL is required at build time (next.config.ts rewrite target).
+# §33.5 — deploy admin-web to Cloudflare Pages (static export).
+# Admin is a client-side SPA shell: all data via direct API calls with a
+# bearer token (no server-side proxy, no cookies cross-origin).
 name: deploy-admin-web
 
 on:
@@ -25,15 +26,14 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm turbo run build --filter=@pgegypt/admin-web
-      - name: OpenNext build
+      - name: Build static export
         working-directory: apps/admin-web
         env:
-          API_BASE_URL: https://pgegypt-api.abdulrahmannader-123.workers.dev
-          NEXT_PUBLIC_SITE_URL: https://pgegypt-admin-web.abdulrahmannader-123.workers.dev
-        run: pnpm exec opennextjs-cloudflare build
-      - name: Deploy production
+          NEXT_PUBLIC_API_BASE_URL: https://pgegypt-api.abdulrahmannader-123.workers.dev
+          NEXT_PUBLIC_SITE_URL: https://pgegypt-admin-web.pages.dev
+        run: pnpm exec next build
+      - name: Deploy to Pages
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-        run: pnpm exec wrangler deploy
+        run: pnpm exec wrangler pages deploy out --project-name=pgegypt-admin-web
         working-directory: apps/admin-web

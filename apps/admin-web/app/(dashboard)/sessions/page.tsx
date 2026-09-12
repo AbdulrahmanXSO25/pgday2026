@@ -259,7 +259,7 @@ export default function SessionsPage() {
               <li key={row.id} className="flex items-center justify-between px-4 py-3">
                 <div className="min-w-0">
                   <Link
-                    href={`/sessions/${row.id}`}
+                    href={`/sessions/edit?id=${row.id}`}
                     className="text-sm font-semibold hover:underline"
                   >
                     {row.title}
