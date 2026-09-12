@@ -1,8 +1,30 @@
 /**
- * lib/api.ts — thin HTTP client for admin-web → api via same-origin /api proxy.
+ * lib/api.ts — thin HTTP client for admin-web → API.
  * All data flows through API; no direct DB imports (§8 constraint).
- * Uses Next.js rewrite: /api/:path* → API_BASE_URL/v1/:path*
+ *
+ * Static (Pages) architecture: calls the API cross-origin directly with a
+ * bearer token (no cookie, no server-side proxy). Token lives in
+ * sessionStorage; 401 clears it and redirects to /login.
  */
+
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8787";
+
+const TOKEN_KEY = "pgegypt_admin_token";
+
+export function getAccessToken(): string | null {
+  if (typeof window === "undefined") return null;
+  return window.sessionStorage.getItem(TOKEN_KEY);
+}
+
+export function setAccessToken(token: string): void {
+  if (typeof window === "undefined") return;
+  window.sessionStorage.setItem(TOKEN_KEY, token);
+}
+
+export function clearAccessToken(): void {
+  if (typeof window === "undefined") return;
+  window.sessionStorage.removeItem(TOKEN_KEY);
+}
 
 export type ApiSuccess<T> = {
   success: true;
@@ -55,28 +77,25 @@ export class ApiClientError extends Error {
 }
 
 /**
- * Core fetch helper — always sends credentials (cookie) and expects JSON.
- * Path must include leading slash and be relative to /api (e.g. "/auth/me").
+ * Core fetch helper — calls the API directly (cross-origin) with a bearer
+ * token. Path must include leading slash and be relative to /v1
+ * (e.g. "/auth/me" → {API_BASE}/v1/auth/me).
  */
 export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
-  const url = path.startsWith("/api") ? path : `/api${path.startsWith("/") ? path : `/${path}`}`;
+  const url = `${API_BASE}/v1${path.startsWith("/") ? path : `/${path}`}`;
 
+  const token = getAccessToken();
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
     // §30.2 CSRF defense-in-depth — required by api on admin mutations in production
     "X-Requested-With": "pgegypt-admin",
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
     ...(init.headers as Record<string, string> | undefined),
   };
-
-  // Remove Content-Type for GET/HEAD with no body to avoid preflight noise
-  if (!init.body) {
-    // keep it — API expects JSON, but GET doesn't need it; leaving is harmless
-  }
 
   const res = await fetch(url, {
     ...init,
     headers,
-    credentials: "include",
   });
 
   // Handle 204 No Content
@@ -99,9 +118,11 @@ export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise
     const message = (err?.message as string) ?? res.statusText ?? "Request failed";
     const fieldErrors = (err?.fieldErrors as Record<string, string> | undefined) ?? undefined;
 
-    // §14.3 — session expired/revoked: send the organizer back to login once.
-    // Skip for the login endpoint itself so the form can show the real error.
+    // §14.3 — session expired/revoked: clear token and send the organizer back
+    // to login once. Skip for the login endpoint itself so the form can show
+    // the real error.
     if (res.status === 401 && typeof window !== "undefined" && !path.includes("/auth/login")) {
+      clearAccessToken();
       const next = window.location.pathname + window.location.search;
       if (!window.location.pathname.startsWith("/login")) {
         window.location.assign(`/login?next=${encodeURIComponent(next)}`);
@@ -135,10 +156,10 @@ export async function apiPost<T>(path: string, body: unknown, init?: RequestInit
 
 /**
  * Auth helpers — thin wrappers around /auth endpoints.
- * Login sets httpOnly cookie via Set-Cookie from API (through proxy).
+ * Login returns a bearer token (stored in sessionStorage by the login page).
  */
-export function login(payload: LoginPayload): Promise<LoginResponse> {
-  return apiPost<LoginResponse>("/auth/login", payload);
+export function login(payload: LoginPayload): Promise<LoginResponse & { accessToken: string }> {
+  return apiPost<LoginResponse & { accessToken: string }>("/auth/login", payload);
 }
 
 export function fetchMe(): Promise<MeResponse> {

@@ -18,9 +18,18 @@ try {
   // ignore — build will surface real error if any
 }
 
-const apiBase = process.env.API_BASE_URL ?? "http://localhost:8787";
+// Static export — admin is a client-side SPA shell; all data via API calls.
+const apiOrigin = (() => {
+  const raw = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8787";
+  try {
+    return new URL(raw).origin;
+  } catch {
+    return raw;
+  }
+})();
 
 const nextConfig: NextConfig = {
+  output: "export",
   images: { unoptimized: true },
   transpilePackages: [
     "@pgegypt/ui",
@@ -29,20 +38,11 @@ const nextConfig: NextConfig = {
     "@pgegypt/types",
     "@pgegypt/auth",
   ],
-  async rewrites() {
-    return [
-      {
-        source: "/api/:path*",
-        destination: `${apiBase}/v1/:path*`,
-      },
-    ];
-  },
   async headers() {
     const secureHeaders = [
       {
         key: "Content-Security-Policy",
-        value:
-          "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' ws: wss:; frame-ancestors 'none'; base-uri 'none'; form-action 'self'",
+        value: `default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' ws: wss: ${apiOrigin}; frame-ancestors 'none'; base-uri 'none'; form-action 'self'`,
       },
       { key: "Strict-Transport-Security", value: "max-age=31536000; includeSubDomains; preload" },
       { key: "X-Frame-Options", value: "DENY" },

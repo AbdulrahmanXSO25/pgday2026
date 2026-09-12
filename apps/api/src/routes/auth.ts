@@ -103,6 +103,9 @@ export function authRoutes() {
         data: {
           user: result.user,
           expiresAt: result.expiresAt,
+          // Bearer token for cross-origin admin (static Pages) — cookie still set
+          // for same-origin/proxy clients. Same session, either transport works.
+          accessToken: result.token,
         },
         requestId: c.get("requestId" as never) as string | undefined,
       },

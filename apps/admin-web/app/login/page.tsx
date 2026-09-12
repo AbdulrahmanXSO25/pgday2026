@@ -3,7 +3,7 @@
 import { Suspense, useState, type FormEvent } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useMutation } from "@tanstack/react-query";
-import { ApiClientError } from "@/lib/api";
+import { ApiClientError, setAccessToken } from "@/lib/api";
 
 function LoginForm() {
   const router = useRouter();
@@ -16,12 +16,14 @@ function LoginForm() {
 
   const loginMut = useMutation({
     mutationFn: async (payload: { email: string; password: string }) => {
-      const res = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify(payload),
-      });
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8787"}/v1/auth/login`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        }
+      );
 
       const body = await res.json().catch(() => null);
 
@@ -39,6 +41,12 @@ function LoginForm() {
           detail,
           fieldErrors
         );
+      }
+
+      // Store bearer token for cross-origin API calls (static Pages admin)
+      const data = (body as { success: true; data: { accessToken?: string; user: unknown } }).data;
+      if (data?.accessToken) {
+        setAccessToken(data.accessToken);
       }
 
       return body as { success: true; data: { user: unknown } };

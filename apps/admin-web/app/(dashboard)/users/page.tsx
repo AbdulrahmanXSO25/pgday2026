@@ -134,7 +134,7 @@ export default function UsersPage() {
           <li key={u.id} className="card flex items-center justify-between rounded-sm border p-3">
             <div className="min-w-0">
               <Link
-                href={`/users/${u.id}`}
+                href={`/users/edit?id=${u.id}`}
                 className="text-ink text-sm font-semibold hover:underline"
               >
                 {u.displayName ?? u.email}
