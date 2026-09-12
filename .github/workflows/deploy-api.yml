@@ -4,7 +4,7 @@ name: deploy-api
 
 on:
   push:
-    branches: [main]
+    branches: [master]
     paths:
       - "apps/api/**"
       - "packages/db/**"
@@ -32,14 +32,12 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm turbo run build --filter=@pgegypt/api
       - name: Apply D1 migrations (production)
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          workingDirectory: apps/api
-          command: d1 migrations apply pgegypt-db --remote
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: pnpm exec wrangler d1 migrations apply pgegypt-db --remote
+        working-directory: apps/api
       - name: Deploy to production
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          workingDirectory: apps/api
-          command: deploy
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: pnpm exec wrangler deploy
+        working-directory: apps/api

@@ -1,12 +1,12 @@
 # §33.4 — deploy public-web. Two triggers, same job body:
-# - push to main (code change) → rebuild using committed content/*.json
+# - push to master (code change) → rebuild using committed content/*.json
 # - repository_dispatch (publish) → fetch latest snapshot from R2 first, then build+deploy
 # NEXT_PUBLIC_* vars are inlined at build time — must be set here (wrangler vars are runtime-only).
 name: deploy-public-web
 
 on:
   push:
-    branches: [main]
+    branches: [master]
     paths:
       - "apps/public-web/**"
       - "packages/ui/**"
@@ -47,8 +47,7 @@ jobs:
       - name: noindex guard (§27.5)
         run: node scripts/assert-no-noindex.mjs apps/public-web/.open-next/assets
       - name: Deploy
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          workingDirectory: apps/public-web
-          command: deploy
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: pnpm exec wrangler deploy
+        working-directory: apps/public-web
