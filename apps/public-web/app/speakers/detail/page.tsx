@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { getSpeaker, getSpeakerSessions } from "@/lib/content";
 import { PageHero } from "@/components/ui/page-hero";
 import { Section } from "@/components/ui/section";
+import { formatTimeRange } from "@/lib/dates";
 
 /**
  * Speaker detail — query-param page (/speakers/detail?id=...).
@@ -44,9 +45,7 @@ function SpeakerDetailInner() {
               {sessions.map((s) => (
                 <li key={s.id} className="card p-4">
                   <p className="font-semibold">{s.title}</p>
-                  <p className="text-ink-muted text-sm">
-                    {s.start} — {s.end}
-                  </p>
+                  <p className="text-ink-muted text-sm">{formatTimeRange(s.start, s.end)}</p>
                 </li>
               ))}
             </ul>

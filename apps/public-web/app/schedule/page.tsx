@@ -5,6 +5,7 @@ import { PageHero } from "@/components/ui/page-hero";
 import { ScheduleList } from "@/components/schedule/schedule-list";
 import { Button } from "@/components/ui/button";
 import { Section } from "@/components/ui/section";
+import { formatTimezone } from "@/lib/dates";
 
 export const metadata: Metadata = {
   title: "Schedule",
@@ -19,7 +20,7 @@ export default function SchedulePage() {
       <PageHero
         eyebrow="Agenda"
         title="Schedule"
-        description={`One track, ${talkCount} talks, and plenty of coffee — ${siteConfig.event.dateDisplay}, Cairo. All times in ${siteConfig.event.timezone.replace("_", "/")} local time.`}
+        description={`One track, ${talkCount} talks, and plenty of coffee — ${siteConfig.event.dateDisplay}, ${siteConfig.event.city}. All times in ${formatTimezone(siteConfig.event.timezone)}.`}
       />
 
       <Section>

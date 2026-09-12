@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import type { Speaker } from "@/lib/content";
 import { getSession } from "@/lib/content";
@@ -29,10 +31,28 @@ export function SpeakerCard({
         aria-hidden="true"
         className="border-hairline bg-surface-raised relative block aspect-square border-b"
       >
-        {}
         <img
           src={speaker.photo}
           alt={`Portrait of ${speaker.name}`}
+          onError={(e) => {
+            // Fallback: initials avatar when the portrait is missing/broken
+            const el = e.currentTarget;
+            el.style.display = "none";
+            const parent = el.parentElement;
+            if (parent && !parent.querySelector("[data-initials]")) {
+              const span = document.createElement("span");
+              span.setAttribute("data-initials", "");
+              span.className =
+                "text-pg-blue absolute inset-0 flex items-center justify-center text-4xl font-bold";
+              span.textContent = speaker.name
+                .split(" ")
+                .map((w) => w[0])
+                .slice(0, 2)
+                .join("")
+                .toUpperCase();
+              parent.appendChild(span);
+            }
+          }}
           className="h-full w-full object-cover"
         />
       </Link>

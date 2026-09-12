@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { ScheduleItem } from "@/lib/content";
 import { getSpeaker } from "@/lib/content";
 import { Badge } from "@/components/ui/badge";
+import { formatTimeRange } from "@/lib/dates";
 
 export function ScheduleRow({ item }: { item: ScheduleItem }) {
   const speakers = item.speakerIds.map(getSpeaker).filter(Boolean);
@@ -12,7 +13,7 @@ export function ScheduleRow({ item }: { item: ScheduleItem }) {
       className="card hover:border-pg-blue group flex flex-col gap-3 p-4 transition-colors sm:flex-row sm:items-start sm:justify-between"
     >
       <div className="text-ink-muted shrink-0 text-sm font-medium tabular-nums">
-        {item.start} – {item.end}
+        {formatTimeRange(item.start, item.end)}
       </div>
       <div className="flex-1 sm:ml-6">
         <h3 className="text-pg-blue text-base font-semibold group-hover:underline">{item.title}</h3>
