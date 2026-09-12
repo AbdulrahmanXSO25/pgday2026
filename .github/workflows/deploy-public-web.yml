@@ -33,9 +33,10 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      # On a publish trigger, overwrite committed content with the published snapshot from R2
-      - name: Fetch content snapshot (publish trigger)
-        if: github.event_name == 'repository_dispatch'
+      # Fetch the published snapshot from R2 on EVERY deploy (code push or publish),
+# so the live site always reflects the latest published content. Falls back to
+# committed content when no snapshot exists yet.
+      - name: Fetch content snapshot
         env:
           R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
           R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
