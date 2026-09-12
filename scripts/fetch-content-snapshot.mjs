@@ -1,7 +1,13 @@
 /**
  * §16.2 — fetch the published content snapshot from R2 into apps/public-web/content/
- * before `next build`. Runs in CI on a repository_dispatch(publish) trigger.
- * No-op if R2 env vars are absent (e.g., local or a plain code push).
+ * before `next build`. Runs on EVERY public-web deploy (code push or publish),
+ * so the live site always reflects the latest published content.
+ *
+ * Behavior:
+ * - R2 env absent (local) → no-op, keep committed content.
+ * - Snapshot exists → overwrite committed content with the published snapshot.
+ * - Snapshot missing (no publish yet) → keep committed content, do NOT fail.
+ * - Malformed snapshot → fail loudly (a broken snapshot must never ship).
  */
 import { S3Client, GetObjectCommand } from "@aws-sdk/client-s3";
 import { writeFileSync, mkdirSync } from "node:fs";
@@ -31,6 +37,7 @@ const client = new S3Client({
 
 mkdirSync(destDir, { recursive: true });
 
+let wroteAny = false;
 for (const file of FILES) {
   const prefix = snapshotId
     ? `content-snapshots/${eventSlug}/${snapshotId}/${file}`
@@ -42,10 +49,22 @@ for (const file of FILES) {
     if (!body) throw new Error("empty body");
     JSON.parse(body); // fail loudly on malformed snapshot
     writeFileSync(join(destDir, file), body);
+    wroteAny = true;
     console.log(`[fetch-content-snapshot] wrote ${file} from ${key}`);
   } catch (err) {
-    console.error(`[fetch-content-snapshot] failed ${key}: ${String(err)}`);
+    const msg = err instanceof Error ? err.message : String(err);
+    // Missing snapshot (no publish yet) → keep committed content.
+    if (/NoSuchKey|404|not found/i.test(msg)) {
+      console.log(`[fetch-content-snapshot] no snapshot for ${key} — keeping committed content.`);
+      continue;
+    }
+    // Malformed or other error → fail loudly.
+    console.error(`[fetch-content-snapshot] failed ${key}: ${msg}`);
     process.exit(1);
   }
 }
-console.log("[fetch-content-snapshot] done");
+console.log(
+  wroteAny
+    ? "[fetch-content-snapshot] done — published snapshot applied."
+    : "[fetch-content-snapshot] done — no snapshot found, using committed content."
+);
