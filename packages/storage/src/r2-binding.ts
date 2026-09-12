@@ -29,9 +29,7 @@ export type R2BucketLike = {
     key: string
   ): Promise<{ size?: number; httpMetadata?: { contentType?: string }; etag?: string } | null>;
   delete(key: string): Promise<void>;
-  get(
-    key: string
-  ): Promise<{
+  get(key: string): Promise<{
     arrayBuffer(): Promise<ArrayBuffer>;
     httpMetadata?: { contentType?: string };
   } | null>;
@@ -163,6 +161,7 @@ export function createR2PresignClient(config: R2PresignConfig): R2PresignClient 
       const url = new URL(
         `${endpoint}/${bucket}/${key.split("/").map(encodeURIComponent).join("/")}`
       );
+      url.searchParams.set("X-Amz-Expires", String(expiresIn));
       const client = await getAwsClient();
       const signed = await client.sign(
         new Request(url, {
