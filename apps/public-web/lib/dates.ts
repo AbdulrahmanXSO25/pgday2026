@@ -3,11 +3,36 @@
  * Schedule times are "HH:MM" strings on the event day (single-day event).
  */
 
+/** "HH:MM" passthrough; ISO timestamp → "HH:MM" in Africa/Cairo. */
+function formatTime(value: string | undefined): string {
+  if (!value) return "";
+  // ISO timestamp (from published snapshots) → Cairo local time
+  if (value.includes("T")) {
+    try {
+      const d = new Date(value);
+      if (Number.isNaN(d.getTime())) return value;
+      const fmt = new Intl.DateTimeFormat("en-US", {
+        timeZone: "Africa/Cairo",
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false,
+      });
+      return fmt.format(d);
+    } catch {
+      return value;
+    }
+  }
+  // Already "HH:MM" (seed content) — display as-is
+  return value;
+}
+
 /** "09:00" + "09:30" → "09:00 – 09:30" (en dash, tabular for alignment). */
 export function formatTimeRange(start: string | undefined, end: string | undefined): string {
-  if (!start && !end) return "";
-  if (!end) return start ?? "";
-  return `${start ?? ""} – ${end}`;
+  const s = formatTime(start);
+  const e = formatTime(end);
+  if (!s && !e) return "";
+  if (!e) return s;
+  return `${s} – ${e}`;
 }
 
 /** "Africa/Cairo" → "Cairo time". Falls back to the raw value. */
