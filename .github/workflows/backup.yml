@@ -12,15 +12,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.12.3
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
       - name: Export D1
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          workingDirectory: apps/api
-          command: d1 export pgegypt-db --remote --output backup.sql
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: pnpm exec wrangler d1 export pgegypt-db --remote --output backup.sql
+        working-directory: apps/api
       - name: Upload to R2 (backups/<date>/)
         env:
           R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
@@ -28,5 +32,4 @@ jobs:
           R2_ENDPOINT: ${{ secrets.R2_ENDPOINT }}
         run: |
           DATE=$(date -u +%Y-%m-%d)
-          npx --yes @aws-sdk/client-s3 > /dev/null 2>&1 || npm install --no-save @aws-sdk/client-s3
           node scripts/upload-backup.mjs backup.sql "backups/pgegypt-2026/${DATE}/db.sql"

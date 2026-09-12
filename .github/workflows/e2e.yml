@@ -20,9 +20,11 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
 
-      # Local infra used by media/email paths (best-effort; tests don't hard-require it)
+      # Local infra used by media/email paths (best-effort; tests don't hard-require it).
+      # Docker Hub anonymous pulls are rate-limited on shared runners — never fail the job.
       - name: Start MinIO + Maildev
-        run: docker compose -f docker/docker-compose.yml up -d
+        continue-on-error: true
+        run: docker compose -f docker/docker-compose.yml up -d || true
 
       # Fresh local DB + seed + organizer accounts for login tests
       - name: Prepare local database
