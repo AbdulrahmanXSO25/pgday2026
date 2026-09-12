@@ -1,159 +1,165 @@
-# PG Day Egypt — Deployment & Config Injection Checklist (Phase 7)
+# Deployment Guide
 
-Everything in Phases 0–6 is local-first and Cloudflare-free. This document is the
-**only** remaining work to go live: provisioning Cloudflare resources, injecting
-secrets/config, and running the deploy workflows. No application code changes are
-required — the adapters in `packages/{db,storage,queue,mail,publish}` already branch
-on `RUNTIME`/env.
+How PG Day Egypt 2026 runs in production, and how to deploy it.
 
-## 1. Prerequisites
+---
 
-- Cloudflare account with Workers, D1, R2, Queues enabled.
-- GitHub repo with Environments (`staging`, `production`) and required reviewers on `production`.
-- Node 22 + pnpm 9 locally (for the one-time provisioning commands).
+## The big picture
 
-## 2. Provision Cloudflare resources
+Three apps, one Cloudflare account:
 
-```bash
-# D1 databases (staging + production)
-wrangler d1 create pgegypt-db-staging
-wrangler d1 create pgegypt-db
+| App         | Hosting                          | URL                                                  |
+| ----------- | -------------------------------- | ---------------------------------------------------- |
+| Public site | Cloudflare Pages (static export) | https://pgegypt-public-web.pages.dev                 |
+| Admin panel | Cloudflare Pages (static export) | https://pgegypt-admin-web.pages.dev                  |
+| API         | Cloudflare Worker                | https://pgegypt-api.abdulrahmannader-123.workers.dev |
 
-# R2 bucket (single bucket; content-snapshots/ + backups/ prefixes)
-wrangler r2 bucket create pgegypt-media
+Plus the data layer:
 
-# Queue
-wrangler queues create pgegypt-email-queue
-```
+| Resource    | Name                                | Used for                                                  |
+| ----------- | ----------------------------------- | --------------------------------------------------------- |
+| D1 database | `pgegypt-db`                        | All app data                                              |
+| R2 bucket   | `pgegypt-media`                     | Speaker photos, sponsor logos, content snapshots, backups |
+| R2 bucket   | `pgegypt-public-web-opennext-cache` | (legacy OpenNext cache — no longer used)                  |
+| R2 bucket   | `pgegypt-admin-web-opennext-cache`  | (legacy OpenNext cache — no longer used)                  |
+| Queue       | `pgegypt-email`                     | Transactional email jobs                                  |
+| Email       | Resend                              | Sends the emails (production)                             |
 
-Update `apps/api/wrangler.jsonc` with the real `database_id`s and queue name.
+**Deploys are automatic.** Pushing to `master` triggers GitHub Actions, which builds and deploys each app. No manual steps.
 
-## 3. Secrets (never commit — `wrangler secret put`)
+---
 
-| Secret                                                      | Where                      | Used by                                                           |
-| ----------------------------------------------------------- | -------------------------- | ----------------------------------------------------------------- |
-| `RESEND_API_KEY`                                            | api Worker                 | `packages/mail` (Resend)                                          |
-| `EMAIL_FROM`                                                | api Worker                 | mailer from-address                                               |
-| `S3_ACCESS_KEY_ID` / `S3_SECRET_ACCESS_KEY`                 | api Worker                 | R2 S3-compatible access (R2 API token)                            |
-| `S3_ENDPOINT`                                               | api Worker                 | `https://<account_id>.r2.cloudflarestorage.com`                   |
-| `S3_BUCKET`                                                 | api Worker                 | `pgegypt-media`                                                   |
-| `GITHUB_DISPATCH_TOKEN`                                     | api Worker                 | `repository_dispatch` publish trigger (PAT with `actions: write`) |
-| `GITHUB_REPO`                                               | api Worker                 | `owner/repo` for dispatch                                         |
-| `CLOUDFLARE_API_TOKEN`                                      | GitHub Environment secrets | deploy workflows                                                  |
-| `R2_ACCESS_KEY_ID` / `R2_SECRET_ACCESS_KEY` / `R2_ENDPOINT` | GitHub Environment secrets | `fetch-content-snapshot.mjs`, `backup.yml`                        |
+## How a deploy works
 
-```bash
-cd apps/api
-wrangler secret put RESEND_API_KEY
-wrangler secret put EMAIL_FROM
-wrangler secret put S3_ACCESS_KEY_ID
-wrangler secret put S3_SECRET_ACCESS_KEY
-wrangler secret put S3_ENDPOINT
-wrangler secret put S3_BUCKET
-wrangler secret put GITHUB_DISPATCH_TOKEN
-wrangler secret put GITHUB_REPO
-```
+### Public site + admin panel (Pages)
 
-## 4. DNS
+Both frontends are **static exports** (`next build` with `output: "export"`). They're plain HTML/JS/CSS on Cloudflare Pages — no server runtime.
 
-- `https://pgegypt-public-web.abdulrahmannader-123.workers.dev` → `pgegypt-public-web` Worker (proxied)
-- `https://pgegypt-admin-web.abdulrahmannader-123.workers.dev` → `pgegypt-admin-web` Worker (proxied)
-- `https://pgegypt-api.abdulrahmannader-123.workers.dev` → `pgegypt-api` Worker (proxied)
-- (optional) `media.pgegypt.org` → R2 public bucket for hotlinked images
+The workflow (`deploy-public-web.yml`, `deploy-admin-web.yml`):
 
-Update `NEXT_PUBLIC_SITE_URL`, `NEXT_PUBLIC_API_BASE_URL`, `API_BASE_URL` vars in the
-three `wrangler.jsonc` files to the real hostnames.
+1. Install dependencies (`pnpm install --frozen-lockfile`)
+2. Build the static export with the right env vars
+3. Deploy with `wrangler pages deploy out --project-name=...`
+4. Run a smoke check against the live URL
 
-## 5. Bootstrap data (production D1)
+### API (Worker)
 
-```bash
-# After first deploy-api run applies migrations:
-wrangler d1 execute pgegypt-db --remote --command \
-  "INSERT INTO events (id, slug, name, date, date_display, city, venue_status, timezone, status, settings_json) VALUES ('evt_00000000-0000-7000-8000-000000000001','pgegypt-2026','PG Day Egypt 2026','2026-10-10','Saturday, October 10, 2026','Cairo, Egypt','tba','Africa/Cairo','active','{}');"
-# Create the first SUPER_ADMIN (hash via packages/auth hashPassword, e.g. a one-off script)
-```
+The API is a Hono app bundled into a Cloudflare Worker (`deploy-api.yml`):
 
-## 6. GitHub Environments
+1. Install dependencies
+2. Apply D1 migrations (`wrangler d1 migrations apply pgegypt-db --remote`)
+3. Deploy with `wrangler deploy`
+4. Run a smoke check (health + CORS preflight)
 
-- Create `staging` and `production` environments.
-- Add `CLOUDFLARE_API_TOKEN` (+ R2 vars) to both.
-- Enable "Required reviewers" on `production`.
+---
 
-## 7. Deploy order
+## The publish pipeline
 
-1. `deploy-api.yml` (migrations + Worker) — staging auto, production gated.
-2. `deploy-admin-web.yml` — staging auto, production gated.
-3. `deploy-public-web.yml` — push-triggered; publish-triggered via `repository_dispatch`.
-4. `backup.yml` — daily D1 export → R2 (`backups/…`, 30-day lifecycle rule on the bucket).
+The public site is static, so content changes go through a **publish** step:
 
-## 8. Post-deploy verification
+1. An organizer edits content in the admin panel and clicks **Publish now**.
+2. The API reads the database, assembles a content snapshot (6 JSON files), and writes it to R2:
+   `content-snapshots/{slug}/{snapshotId}/*.json` (plus a copy under `latest/`).
+3. The API fires a GitHub `repository_dispatch` event with `{ slug, snapshotId }`.
+4. GitHub Actions (`deploy-public-web.yml`, triggered by `repository_dispatch`) downloads that exact snapshot, rebuilds the site, and deploys to Pages.
 
-- `curl https://pgegypt-api.abdulrahmannader-123.workers.dev/v1/health` → `{"success":true,"status":"ok"}`
-- Login at `https://pgegypt-admin-web.abdulrahmannader-123.workers.dev/login` with the bootstrap SUPER_ADMIN.
-- `POST /v1/publish` from admin → verify `apps/public-web/content/*.json` snapshot in R2
-  (`content-snapshots/pgegypt-2026/latest/`) and the public site rebuild.
-- Register via `https://pgegypt-public-web.abdulrahmannader-123.workers.dev/register` → confirmation email via Resend.
-- Check-in a confirmed registration via admin `/checkin`.
+**Result:** the live site reflects the database within a minute or two of clicking Publish.
 
-## 9. Rollback
+### What gets published
 
-- D1: Time Travel (point-in-time) for fat-fingered deletes; R2 `backups/…` for full restore.
-- Public site: re-run `deploy-public-web.yml` with an older `content-snapshots/…` key
-  (manual `workflow_dispatch` input).
+Only **published** content appears on the site:
 
-## 10. Production operations (Q6 hardening)
+- Speakers and sessions must be marked **Published** in the admin (they start as drafts).
+- Settings (event name, tagline, city, date, conference hours) apply immediately on publish.
 
-### Secrets on the API worker (set once)
+---
+
+## Secrets & environment
+
+### API worker secrets (set once)
 
 ```bash
 wrangler secret put RESEND_API_KEY          # Resend dashboard
-wrangler secret put GITHUB_DISPATCH_TOKEN   # fine-grained PAT, contents:write on this repo
-wrangler secret put R2_ACCOUNT_ID           # ab4321ff2699dcc01b47d264c605abb8
+wrangler secret put GITHUB_DISPATCH_TOKEN   # fine-grained PAT, Contents: read+write on this repo
+wrangler secret put R2_ACCOUNT_ID           # Cloudflare account id
 wrangler secret put R2_ACCESS_KEY_ID        # R2 API token (pgegypt-media, Object Read & Write)
 wrangler secret put R2_SECRET_ACCESS_KEY    # same token
 wrangler secret put R2_BUCKET_NAME          # pgegypt-media
 ```
 
-Until `RESEND_API_KEY` is set, transactional emails are enqueued but not delivered.
-Until the R2 token secrets are set, media presigned uploads return a clear 500.
+### API worker vars (in `apps/api/wrangler.jsonc`)
 
-### Staging environment (recommended before the event)
+`RUNTIME=production`, `API_BASE_URL`, `SITE_URL`, `EMAIL_FROM`, `GITHUB_REPO`, `MEDIA_PUBLIC_BASE_URL`.
 
-- Add `[env.staging]` blocks to `apps/api/wrangler.jsonc` (own D1 `pgegypt-db-staging`,
-  R2 bucket or prefix, Queue) and deploy from a `staging` branch.
-- Pages gives per-branch preview URLs for the frontends automatically.
+### GitHub Actions secrets
 
-### Backup restore drill
+| Secret                                                      | Used by                                                           |
+| ----------------------------------------------------------- | ----------------------------------------------------------------- |
+| `CLOUDFLARE_API_TOKEN`                                      | All deploys (needs Workers + Pages + D1 + R2 + Queue permissions) |
+| `R2_ACCESS_KEY_ID` / `R2_SECRET_ACCESS_KEY` / `R2_ENDPOINT` | Publish-triggered snapshot fetch                                  |
 
-- Run once: `wrangler d1 time-travel restore pgegypt-db --timestamp=<T>` against a scratch DB
-  to confirm the restore path works before you need it.
-- `backup.yml` exports D1 → R2 daily (`backups/pgegypt-2026/<date>/db.sql`).
+### R2 bucket CORS
 
-### Email deliverability (Resend)
+The `pgegypt-media` bucket needs a CORS policy so the browser can upload files directly to R2:
 
-- Verify `pgegypt.org` in Resend: add the SPF TXT + 3 DKIM CNAME records it provides.
-- Add DMARC: `v=DMARC1; p=quarantine; rua=mailto:postmaster@pgegypt.org`.
-- Without SPF+DKIM+DMARC, CFP/registration emails risk spam or rejection.
+```json
+[
+  {
+    "AllowedOrigins": [
+      "https://pgegypt-admin-web.pages.dev",
+      "https://pgegypt-public-web.pages.dev",
+      "http://localhost:3000",
+      "http://localhost:3001"
+    ],
+    "AllowedMethods": ["GET", "PUT", "HEAD"],
+    "AllowedHeaders": ["*"],
+    "ExposeHeaders": ["ETag"],
+    "MaxAgeSeconds": 3600
+  }
+]
+```
 
-### Data retention (PII)
+---
 
-- Attendee PII (names, emails) lives in D1 `registrations` + `audit_logs` (redacted).
-- Document a retention policy: e.g., keep registrations 12 months post-event, then purge
-  (`DELETE` + D1 Time Travel backup retained). Check-in tokens are stored hashed.
+## Adding a custom domain (when ready)
 
-### Load testing before the event
+1. Add the domain to each Pages project (Dashboard → Pages → project → Custom domains).
+2. Add a custom domain to the API worker (Dashboard → Workers → `pgegypt-api` → Settings → Domains).
+3. Update the CORS allowlist in `apps/api/src/middleware/cors.ts`.
+4. Update `connect-src` in both frontends' CSP (`_headers` + `next.config.ts`).
+5. Update `NEXT_PUBLIC_*` / `API_BASE_URL` / `SITE_URL` in the deploy workflows.
+6. Verify Resend SPF/DKIM/DMARC for the new domain.
 
-- Registration/CFP traffic is spiky (announcement bursts). Run a synthetic burst against
-  `/v1/registrations` + `/v1/cfp/submissions` (rate limit is 5/hour/IP — use distinct IPs
-  or a load-test account) and watch D1 concurrency + Queue backpressure.
+---
 
-### Migration rollback
+## Rollback
 
-- Migrations 0001–0007 are forward-only. Rollback = restore from D1 Time Travel / R2 backup.
-  This is a documented decision, not an open question.
+- **Public site:** re-run `deploy-public-web.yml` manually, or publish an older snapshot.
+- **API:** `wrangler rollback` (reverts to the previous deployment).
+- **Database:** D1 Time Travel for recent mistakes; the R2 backup for full restore. See [docs/runbooks/restore.md](runbooks/restore.md).
 
-### Observability
+---
 
-- Workers Logs enabled on all three workers (`observability.enabled`).
-- Add error-rate alerts in the Cloudflare dashboard; consider Sentry
-  (`@sentry/cloudflare`) for exception tracking with the same PII-redaction discipline.
+## Backups
+
+`backup.yml` runs daily (03:00 UTC): it exports the D1 database and uploads it to R2 under `backups/pgegypt-2026/<date>/db.sql`. The bucket has a 30-day lifecycle rule.
+
+---
+
+## Observability
+
+- Workers Logs are enabled on the API worker.
+- Post-deploy smoke checks run in every deploy workflow.
+- For deeper monitoring, add error-rate alerts in the Cloudflare dashboard or wire up Sentry (`@sentry/cloudflare`).
+
+---
+
+## Common issues
+
+| Symptom                                  | Cause / fix                                                                                      |
+| ---------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| Portrait upload fails in admin           | R2 bucket CORS policy missing, or `MEDIA_PUBLIC_BASE_URL` not set                                |
+| Images 404 on the site                   | Media URL stored as a relative path — re-confirm the upload after `MEDIA_PUBLIC_BASE_URL` is set |
+| Emails not arriving                      | `RESEND_API_KEY` not set, or Resend domain not verified (SPF/DKIM)                               |
+| Publish succeeds but site unchanged      | `GITHUB_DISPATCH_TOKEN` missing, or the snapshot has no published speakers/sessions              |
+| Deploy fails with "Authentication error" | `CLOUDFLARE_API_TOKEN` missing Pages:Edit permission                                             |
