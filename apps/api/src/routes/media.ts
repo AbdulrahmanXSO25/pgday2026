@@ -295,6 +295,10 @@ export function mediaRoutes() {
         "Content-Type": contentType,
         "Cache-Control": "public, max-age=31536000, immutable",
         "X-Content-Type-Options": "nosniff",
+        // Public media — must override the API's same-origin CORP so the
+        // admin/public sites can load images cross-origin.
+        "Cross-Origin-Resource-Policy": "cross-origin",
+        "Access-Control-Allow-Origin": "*",
       },
     });
   });
