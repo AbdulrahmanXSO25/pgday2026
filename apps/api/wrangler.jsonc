@@ -15,7 +15,7 @@
     {
       "binding": "DB",
       "database_name": "pgegypt-db",
-      "database_id": "ec83ec7f-52bb-4428-8575-46f3a364ca4d",
+      "database_id": "4f76e53f-4217-4d9c-ba6c-728ebbbf8b6d",
       "migrations_dir": "../../migrations"
     }
   ],
