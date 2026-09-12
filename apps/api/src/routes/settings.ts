@@ -21,6 +21,8 @@ const EventPatchSchema = z
     tagline: z.string().max(300).optional().nullable(),
     date: z.string().optional(), // YYYY-MM-DD or ISO
     dateDisplay: z.string().max(200).optional().nullable(),
+    startTime: z.string().max(10).optional().nullable(), // HH:MM conference start
+    endTime: z.string().max(10).optional().nullable(), // HH:MM conference end
     city: z.string().max(200).optional(),
     venueStatus: z.enum(["tba", "confirmed"]).optional(),
     venueName: z.string().max(300).optional().nullable(),
@@ -197,6 +199,8 @@ export function settingsRoutes() {
     if (body.tagline !== undefined) updates.tagline = body.tagline;
     if (body.date !== undefined) updates.date = body.date;
     if (body.dateDisplay !== undefined) updates.dateDisplay = body.dateDisplay;
+    if (body.startTime !== undefined) updates.startTime = body.startTime;
+    if (body.endTime !== undefined) updates.endTime = body.endTime;
     if (body.city !== undefined) updates.city = body.city;
     if (body.venueStatus !== undefined) updates.venueStatus = body.venueStatus;
     if (body.venueName !== undefined) updates.venueName = body.venueName;
@@ -278,6 +282,8 @@ export function settingsRoutes() {
     if (body.tagline !== undefined) updates.tagline = body.tagline;
     if (body.date !== undefined) updates.date = body.date;
     if (body.dateDisplay !== undefined) updates.dateDisplay = body.dateDisplay;
+    if (body.startTime !== undefined) updates.startTime = body.startTime;
+    if (body.endTime !== undefined) updates.endTime = body.endTime;
     if (body.city !== undefined) updates.city = body.city;
     if (body.venueStatus !== undefined) updates.venueStatus = body.venueStatus;
     if (body.venueName !== undefined) updates.venueName = body.venueName;

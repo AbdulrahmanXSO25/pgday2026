@@ -33,12 +33,29 @@ type ApiRoom = {
   slug: string;
 };
 
-/** Unix seconds → "YYYY-MM-DDTHH:mm" for datetime-local inputs (local time) */
-function epochToLocalInput(epoch: number | null | undefined): string {
+/** Unix seconds → "HH:MM" in Africa/Cairo (single-day event — time only). */
+function epochToTimeInput(epoch: number | null | undefined): string {
   if (!epoch) return "";
   const d = new Date(epoch * 1000);
   const pad = (n: number) => String(n).padStart(2, "0");
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  return `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+/** "HH:MM" + event date → unix seconds in Africa/Cairo. Returns null if incomplete. */
+function timeToEpoch(date: string, time: string): number | null {
+  if (!date || !time) return null;
+  const [h, m] = time.split(":").map(Number);
+  if (!Number.isFinite(h) || !Number.isFinite(m)) return null;
+  // Africa/Cairo — Egypt observes DST (UTC+3) from late April to late October
+  const iso = `${date}T${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:00+03:00`;
+  const ms = Date.parse(iso);
+  return Number.isFinite(ms) ? Math.floor(ms / 1000) : null;
+}
+
+/** Minutes since midnight for "HH:MM". */
+function timeToMinutes(time: string): number {
+  const [h, m] = time.split(":").map(Number);
+  return (Number.isFinite(h) ? h : 0) * 60 + (Number.isFinite(m) ? m : 0);
 }
 
 function SessionDetailPageInner() {
@@ -47,7 +64,7 @@ function SessionDetailPageInner() {
   const qc = useQueryClient();
   const [form, setForm] = useState({ slug: "", title: "", type: "talk", level: "", abstract: "" });
   const [selectedSpeakers, setSelectedSpeakers] = useState<string[]>([]);
-  const [slot, setSlot] = useState({ roomId: "", startAt: "", endAt: "" });
+  const [slot, setSlot] = useState({ roomId: "", startTime: "", endTime: "" });
   const [error, setError] = useState<string | null>(null);
 
   const speakersQ = useQuery({
@@ -70,6 +87,41 @@ function SessionDetailPageInner() {
     retry: false,
   });
 
+  const settingsQ = useQuery({
+    queryKey: ["admin", "settings"],
+    queryFn: async () => {
+      const res = await apiFetch<{
+        success: true;
+        data: {
+          date: string;
+          dateDisplay?: string | null;
+          startTime?: string | null;
+          endTime?: string | null;
+        };
+      }>("/settings", { method: "GET" });
+      return res.data;
+    },
+    retry: false,
+  });
+
+  const scheduleQ = useQuery({
+    queryKey: ["admin", "schedule"],
+    queryFn: async () => {
+      const res = await apiFetch<{
+        success: true;
+        data: Array<{
+          id: string;
+          title: string;
+          startsAtEpoch?: number | null;
+          endsAtEpoch?: number | null;
+          roomId?: string | null;
+        }>;
+      }>("/schedule", { method: "GET" });
+      return res.data;
+    },
+    retry: false,
+  });
+
   const sessionQ = useQuery({
     queryKey: ["admin", "session", id],
     queryFn: async () => {
@@ -86,8 +138,8 @@ function SessionDetailPageInner() {
       setSelectedSpeakers(res.data.speakerIds ?? []);
       setSlot({
         roomId: res.data.roomId ?? "",
-        startAt: epochToLocalInput(res.data.startsAtEpoch),
-        endAt: epochToLocalInput(res.data.endsAtEpoch),
+        startTime: epochToTimeInput(res.data.startsAtEpoch),
+        endTime: epochToTimeInput(res.data.endsAtEpoch),
       });
       return res.data;
     },
@@ -135,18 +187,44 @@ function SessionDetailPageInner() {
 
   const slotMut = useMutation({
     mutationFn: async () => {
+      const eventDate = settingsQ.data?.date ?? "";
+      const startsAtEpoch = timeToEpoch(eventDate, slot.startTime);
+      const endsAtEpoch = timeToEpoch(eventDate, slot.endTime);
       await apiFetch(`/schedule/${id}/slot`, {
         method: "PATCH",
         body: JSON.stringify({
           roomId: slot.roomId || null,
-          startsAt: slot.startAt ? new Date(slot.startAt).toISOString() : null,
-          endsAt: slot.endAt ? new Date(slot.endAt).toISOString() : null,
+          startsAtEpoch,
+          endsAtEpoch,
         }),
       });
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["admin", "session", id] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["admin", "session", id] });
+      qc.invalidateQueries({ queryKey: ["admin", "schedule"] });
+    },
     onError: (e) => setError(e instanceof ApiClientError ? e.message : String(e)),
   });
+
+  // Smart conflict check — warn before saving if another session overlaps
+  // the chosen room+time (the API also rejects with 409 as a hard guard).
+  const conflict = (() => {
+    if (!slot.roomId || !slot.startTime || !slot.endTime) return null;
+    const eventDate = settingsQ.data?.date ?? "";
+    const start = timeToEpoch(eventDate, slot.startTime);
+    const end = timeToEpoch(eventDate, slot.endTime);
+    if (!start || !end || end <= start) return null;
+    const clash = (scheduleQ.data ?? []).find(
+      (s) =>
+        s.id !== id &&
+        s.roomId === slot.roomId &&
+        s.startsAtEpoch != null &&
+        s.endsAtEpoch != null &&
+        start < (s.endsAtEpoch as number) &&
+        end > (s.startsAtEpoch as number)
+    );
+    return clash ?? null;
+  })();
 
   if (sessionQ.isLoading) return <p className="text-ink-muted">Loading session…</p>;
   if (sessionQ.isError || !sessionQ.data) {
@@ -277,6 +355,14 @@ function SessionDetailPageInner() {
 
       <div className="card mt-6 max-w-2xl space-y-4 p-6">
         <h2 className="text-lg font-bold">Time & room</h2>
+        <p className="text-ink-muted text-xs">
+          {settingsQ.data?.dateDisplay || settingsQ.data?.date || "Event date"} ·{" "}
+          {settingsQ.data?.startTime ?? "—"} – {settingsQ.data?.endTime ?? "—"} (
+          {settingsQ.data?.startTime || settingsQ.data?.endTime
+            ? "conference hours"
+            : "set hours in Settings"}
+          )
+        </p>
         <div className="grid gap-4 sm:grid-cols-3">
           <label className="block">
             <span className="admin-label text-ink-muted text-xs uppercase">Room</span>
@@ -294,30 +380,73 @@ function SessionDetailPageInner() {
             </select>
           </label>
           <label className="block">
-            <span className="admin-label text-ink-muted text-xs uppercase">Start</span>
+            <span className="admin-label text-ink-muted text-xs uppercase">Start time</span>
             <input
-              type="datetime-local"
-              value={slot.startAt}
-              onChange={(e) => setSlot({ ...slot, startAt: e.target.value })}
+              type="time"
+              value={slot.startTime}
+              min={settingsQ.data?.startTime ?? undefined}
+              max={settingsQ.data?.endTime ?? undefined}
+              onChange={(e) => setSlot({ ...slot, startTime: e.target.value })}
               className="border-hairline bg-surface mt-1 w-full rounded-sm border px-3 py-2 text-sm"
             />
           </label>
           <label className="block">
-            <span className="admin-label text-ink-muted text-xs uppercase">End</span>
+            <span className="admin-label text-ink-muted text-xs uppercase">End time</span>
             <input
-              type="datetime-local"
-              value={slot.endAt}
-              onChange={(e) => setSlot({ ...slot, endAt: e.target.value })}
+              type="time"
+              value={slot.endTime}
+              min={settingsQ.data?.startTime ?? undefined}
+              max={settingsQ.data?.endTime ?? undefined}
+              onChange={(e) => setSlot({ ...slot, endTime: e.target.value })}
               className="border-hairline bg-surface mt-1 w-full rounded-sm border px-3 py-2 text-sm"
             />
           </label>
         </div>
+        {(() => {
+          const eventDate = settingsQ.data?.date ?? "";
+          const start = timeToEpoch(eventDate, slot.startTime);
+          const end = timeToEpoch(eventDate, slot.endTime);
+          const startMin = settingsQ.data?.startTime
+            ? timeToMinutes(settingsQ.data.startTime)
+            : null;
+          const endMax = settingsQ.data?.endTime ? timeToMinutes(settingsQ.data.endTime) : null;
+          const startMinOfDay = slot.startTime ? timeToMinutes(slot.startTime) : null;
+          const endMinOfDay = slot.endTime ? timeToMinutes(slot.endTime) : null;
+          if (slot.startTime && slot.endTime && start && end && end <= start) {
+            return (
+              <p role="alert" className="text-pg-amber text-xs">
+                End time must be after start time.
+              </p>
+            );
+          }
+          if (startMinOfDay != null && startMin != null && startMinOfDay < startMin) {
+            return (
+              <p role="alert" className="text-pg-amber text-xs">
+                Start is before the conference begins ({settingsQ.data?.startTime}).
+              </p>
+            );
+          }
+          if (endMinOfDay != null && endMax != null && endMinOfDay > endMax) {
+            return (
+              <p role="alert" className="text-pg-amber text-xs">
+                End is after the conference ends ({settingsQ.data?.endTime}).
+              </p>
+            );
+          }
+          return null;
+        })()}
+        {conflict && (
+          <p role="alert" className="text-pg-amber text-xs">
+            Conflict: “{conflict.title}” already occupies this room at that time.
+          </p>
+        )}
         <p className="text-ink-muted text-xs">
-          Overlapping sessions in the same room are rejected automatically.
+          Times are on the event day only. Overlapping sessions in the same room are rejected
+          automatically.
         </p>
         <button
           onClick={() => slotMut.mutate()}
-          disabled={slotMut.isPending}
+          disabled={slotMut.isPending || Boolean(conflict)}
           className="bg-pg-blue rounded-sm px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
         >
           Save time & room
