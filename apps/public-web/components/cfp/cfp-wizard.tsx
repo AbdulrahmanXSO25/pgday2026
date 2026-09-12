@@ -18,6 +18,8 @@ type SpeakerDraft = {
   company: string;
   role: string;
   isPrimary: boolean;
+  photoUrl?: string;
+  photoKey?: string;
 };
 
 type WizardState = {
@@ -60,7 +62,7 @@ function Field({
       </label>
       {children}
       {error && (
-        <p role="alert" className="mono-data text-pg-amber mt-1.5 text-[11px]">
+        <p role="alert" className="text-pg-amber mt-1.5 text-xs">
           ✗ {error}
         </p>
       )}
@@ -76,7 +78,18 @@ export function CfpWizard() {
     sessionType: "talk",
     level: "",
     notesToOrganizers: "",
-    speakers: [{ fullName: "", email: "", bio: "", company: "", role: "", isPrimary: true }],
+    speakers: [
+      {
+        fullName: "",
+        email: "",
+        bio: "",
+        company: "",
+        role: "",
+        isPrimary: true,
+        photoUrl: "",
+        photoKey: "",
+      },
+    ],
   });
   const [honeypot, setHoneypot] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -106,7 +119,16 @@ export function CfpWizard() {
       ...prev,
       speakers: [
         ...prev.speakers,
-        { fullName: "", email: "", bio: "", company: "", role: "", isPrimary: false },
+        {
+          fullName: "",
+          email: "",
+          bio: "",
+          company: "",
+          role: "",
+          isPrimary: false,
+          photoUrl: "",
+          photoKey: "",
+        },
       ],
     }));
   };
@@ -129,6 +151,8 @@ export function CfpWizard() {
       company: s.company || undefined,
       role: s.role || undefined,
       isPrimary: s.isPrimary,
+      photoUrl: s.photoUrl || undefined,
+      photoKey: s.photoKey || undefined,
     })),
   });
 
@@ -207,7 +231,7 @@ export function CfpWizard() {
           Thanks for proposing a talk for PG Day Egypt 2026. Our program committee will review it
           and get back to you at the email you provided.
         </p>
-        <p className="mono-data text-ink-muted mt-6">
+        <p className="text-ink-muted mt-6 text-sm">
           reference <span className="text-pg-blue">{submittedId.slice(0, 8)}</span>
         </p>
       </div>
@@ -350,7 +374,9 @@ export function CfpWizard() {
                   <h3 className="text-sm font-semibold">
                     {s.isPrimary ? "Primary speaker" : `Co-speaker ${i}`}
                     {s.isPrimary && (
-                      <span className="mono-data text-pg-blue ml-2 text-[11px]">primary</span>
+                      <span className="text-pg-blue ml-2 text-[11px] font-semibold uppercase">
+                        Primary
+                      </span>
                     )}
                   </h3>
                   {!s.isPrimary && (
@@ -418,6 +444,95 @@ export function CfpWizard() {
                     onChange={(e) => setSpeaker(i, { bio: e.target.value })}
                   />
                 </Field>
+                {s.isPrimary && (
+                  <div>
+                    <span className="text-ink mb-1.5 block text-sm font-medium">
+                      Portrait <span className="text-ink-muted font-normal">(optional)</span>
+                    </span>
+                    <div className="flex items-center gap-4">
+                      <div className="border-hairline bg-surface-raised flex h-20 w-20 items-center justify-center overflow-hidden rounded-sm border">
+                        {s.photoUrl ? (
+                          <img
+                            src={s.photoUrl}
+                            alt="Portrait preview"
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          <span className="text-ink-muted text-[11px]">No photo</span>
+                        )}
+                      </div>
+                      <div className="flex flex-col gap-1.5">
+                        <input
+                          type="file"
+                          accept="image/jpeg,image/png,image/webp"
+                          className="hidden"
+                          id={`cfp-portrait-${i}`}
+                          onChange={async (e) => {
+                            const file = e.target.files?.[0];
+                            if (!file) return;
+                            try {
+                              const apiBase =
+                                process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8787";
+                              const presignRes = await fetch(`${apiBase}/v1/cfp/presign`, {
+                                method: "POST",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({
+                                  filename: file.name,
+                                  mimeType: file.type,
+                                  size: file.size,
+                                }),
+                              });
+                              const presignBody = (await presignRes.json()) as {
+                                success: boolean;
+                                data?: { url: string; storageKey: string };
+                                message?: string;
+                              };
+                              if (!presignRes.ok || !presignBody.data) {
+                                throw new Error(presignBody.message ?? "Could not prepare upload.");
+                              }
+                              const putRes = await fetch(presignBody.data.url, {
+                                method: "PUT",
+                                headers: { "Content-Type": file.type },
+                                body: file,
+                              });
+                              if (!putRes.ok) throw new Error("Upload failed — please retry.");
+                              // Public presign returns the storage key; the media URL is
+                              // resolved after confirm (cfp.service confirms on submit).
+                              setSpeaker(i, {
+                                photoKey: presignBody.data.storageKey,
+                                photoUrl: presignBody.data.url.split("?")[0] ?? "",
+                              });
+                            } catch (err) {
+                              setSubmitError(
+                                err instanceof Error ? err.message : "Portrait upload failed"
+                              );
+                            } finally {
+                              e.target.value = "";
+                            }
+                          }}
+                        />
+                        <label
+                          htmlFor={`cfp-portrait-${i}`}
+                          className="border-pg-blue bg-pg-blue hover:bg-pg-blue-dark inline-flex cursor-pointer items-center gap-1.5 rounded-sm border px-3 py-1.5 text-xs font-semibold text-white"
+                        >
+                          {s.photoUrl ? "Change photo" : "Upload photo"}
+                        </label>
+                        {s.photoUrl && (
+                          <button
+                            type="button"
+                            onClick={() => setSpeaker(i, { photoUrl: "", photoKey: "" })}
+                            className="text-ink-muted text-left text-xs hover:underline"
+                          >
+                            Remove
+                          </button>
+                        )}
+                        <span className="text-ink-muted text-[11px]">
+                          JPG, PNG or WebP, up to 5 MB.
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             ))}
             {state.speakers.length < 4 && (
@@ -435,28 +550,30 @@ export function CfpWizard() {
         {step === 2 && (
           <div className="card space-y-4 p-6 sm:p-8">
             <h3 className="text-lg font-bold">{state.title}</h3>
-            <p className="mono-data text-ink-muted text-xs uppercase">
+            <p className="text-ink-muted text-xs font-semibold uppercase">
               {state.sessionType} · {state.level || "any level"}
             </p>
             <p className="text-ink-muted text-sm leading-relaxed whitespace-pre-wrap">
               {state.abstract}
             </p>
             <div className="border-hairline border-t pt-4">
-              <p className="mono-data text-ink-muted text-xs uppercase">Speakers</p>
+              <p className="text-ink-muted text-xs font-semibold uppercase">Speakers</p>
               <ul className="mt-2 space-y-1">
                 {state.speakers.map((s, i) => (
                   <li key={i} className="text-sm">
                     <span className="font-semibold">{s.fullName}</span>
                     <span className="text-ink-muted"> · {s.email}</span>
                     {s.isPrimary && (
-                      <span className="mono-data text-pg-blue ml-2 text-[11px]">primary</span>
+                      <span className="text-pg-blue ml-2 text-[11px] font-semibold uppercase">
+                        Primary
+                      </span>
                     )}
                   </li>
                 ))}
               </ul>
             </div>
             {state.notesToOrganizers && (
-              <p className="mono-data text-ink-muted border-hairline border-t pt-3 text-xs">
+              <p className="text-ink-muted border-hairline border-t pt-3 text-xs">
                 Notes: {state.notesToOrganizers}
               </p>
             )}

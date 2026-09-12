@@ -20,7 +20,7 @@ export default function ContactPage() {
       />
       <Section>
         <div className="card max-w-xl p-8">
-          <p className="mono-data text-pg-blue mb-2">email</p>
+          <p className="text-pg-blue mb-2 text-sm font-semibold">Email</p>
           <a
             href={`mailto:${siteConfig.organizer.contactEmail}`}
             className="text-pg-blue font-semibold"

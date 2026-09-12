@@ -44,13 +44,13 @@ export function SpeakerCard({
             {speaker.name}
           </Link>
         </h3>
-        <p className="mono-data text-ink-muted mt-1">
+        <p className="text-ink-muted mt-1 text-sm">
           {speaker.role} · {speaker.company}
         </p>
 
         {session && (
           <p className="text-ink-muted mt-2.5 line-clamp-2 text-sm leading-relaxed">
-            <span className="mono-data text-pg-blue">[talk]</span> {session.title}
+            {session.title}
           </p>
         )}
 

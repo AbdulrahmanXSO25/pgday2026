@@ -1,40 +1,15 @@
 import Link from "next/link";
-import { TerminalWindow } from "@/components/ui/terminal-window";
 import { Button } from "@/components/ui/button";
 
 export default function NotFound() {
   return (
-    <div className="relative flex min-h-[60vh] items-center justify-center px-5 py-20">
-      <div className="w-full max-w-xl">
-        <TerminalWindow
-          title="psql — pgegypt-public-web.abdulrahmannader-123.workers.dev"
-          className="mx-auto"
-        >
-          <pre className="text-ink font-mono text-sm leading-relaxed">
-            <span className="text-pg-blue">pgegypt=# </span>
-            <span className="text-ink">SELECT * FROM /{"{this-page}"};</span>
-            {"\n"}
-            <span className="text-pg-amber">ERROR: relation &quot;page&quot; does not exist</span>
-            {"\n"}
-            <span className="text-ink-muted">LINE 1: SELECT * FROM ...</span>
-            {"\n"}
-            <span className="text-ink-muted">{"                     ^"}</span>
-            {"\n"}
-            <span className="text-pg-blue">HINT: </span>
-            <span className="text-ink">
-              The page you&apos;re looking for was dropped in a previous migration.
-            </span>
-            {"\n"}
-            <span className="text-pg-blue">pgegypt=# </span>
-            <Link
-              href="/"
-              className="text-pg-blue decoration-pg-blue/50 hover:decoration-pg-blue underline underline-offset-4"
-            >
-              \c home
-            </Link>
-            <span className="animate-blink bg-pg-blue inline-block h-[1.05em] w-[0.6em] translate-y-[0.2em]" />
-          </pre>
-        </TerminalWindow>
+    <div className="flex min-h-[60vh] items-center justify-center px-5 py-20">
+      <div className="w-full max-w-xl text-center">
+        <p className="text-pg-blue text-sm font-semibold">404</p>
+        <h1 className="text-ink mt-3 text-4xl font-bold tracking-tight">Page not found</h1>
+        <p className="text-ink-muted mt-3 text-lg leading-relaxed">
+          The page you are looking for does not exist or has been moved.
+        </p>
 
         <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
           <Button href="/">Back to home</Button>

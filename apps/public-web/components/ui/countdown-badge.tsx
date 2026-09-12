@@ -25,7 +25,7 @@ export function CountdownBadge({ dateISO, className }: { dateISO: string; classN
   }, [dateISO]);
 
   return (
-    <span className={cn("mono-data text-pg-blue inline-block", className)}>
+    <span className={cn("text-pg-blue inline-block text-sm font-semibold", className)}>
       {days === null ? (
         "days_remaining: --"
       ) : days > 0 ? (

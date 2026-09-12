@@ -2,7 +2,6 @@ import Link from "next/link";
 import { ArrowRight, CalendarDays, MapPin } from "lucide-react";
 import { siteConfig } from "@/lib/config";
 import { getVisibleSponsors, schedule, speakers } from "@/lib/content";
-import { TerminalWindow } from "@/components/ui/terminal-window";
 import { CountdownBadge } from "@/components/ui/countdown-badge";
 import { Button } from "@/components/ui/button";
 import { Section, SectionHeader } from "@/components/ui/section";
@@ -76,7 +75,7 @@ export default function HomePage() {
               production.
             </p>
 
-            <p className="mono-data text-ink-muted mt-5 flex flex-wrap items-center gap-x-5 gap-y-2">
+            <p className="text-ink-muted mt-5 flex flex-wrap items-center gap-x-5 gap-y-2">
               <span className="inline-flex items-center gap-1.5">
                 <CalendarDays aria-hidden="true" className="text-pg-blue size-4" />
                 {event.dateDisplay}
@@ -98,14 +97,24 @@ export default function HomePage() {
           </div>
 
           <div className="hidden lg:block">
-            <TerminalWindow query title="psql -U hacker" />
+            <div className="border-hairline bg-page rounded-lg border p-8 shadow-sm">
+              <p className="text-pg-blue text-sm font-semibold">PG Day Egypt 2026</p>
+              <p className="text-ink mt-3 text-3xl font-bold">{event.dateDisplay}</p>
+              <p className="text-ink-muted mt-1">{event.city}</p>
+              <div className="border-hairline mt-6 border-t pt-4">
+                <p className="text-ink-muted text-sm">
+                  {talkCount} talks · one track · free to attend
+                </p>
+                <p className="text-ink-muted mt-1 text-sm">Organized by {organizer.name}</p>
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
       {/* 2. Quick facts strip */}
       <section aria-label="Event quick facts" className="border-hairline bg-surface border-b">
-        <div className="mono-data mx-auto grid w-full max-w-6xl grid-cols-2 md:grid-cols-4">
+        <div className="mx-auto grid w-full max-w-6xl grid-cols-2 md:grid-cols-4">
           {[
             { k: "duration", v: "1 day" },
             { k: "talks", v: `${talkCount} talks` },
@@ -126,7 +135,7 @@ export default function HomePage() {
       {/* 3. About teaser */}
       <Section>
         <SectionHeader
-          eyebrow="$ SELECT about FROM community WHERE year = 2026"
+          eyebrow="About"
           title="A conference for people who build on Postgres"
           description="PG Day Egypt is a community-run, one-day conference for everyone who builds on PostgreSQL — backend engineers, DBAs, data engineers, and curious developers across Egypt and the wider MENA region."
         />
@@ -146,7 +155,7 @@ export default function HomePage() {
       {/* 4. Featured speakers */}
       <Section className="border-hairline bg-surface border-t">
         <SectionHeader
-          eyebrow="$ SELECT * FROM speakers LIMIT 4"
+          eyebrow="Speakers"
           title="Featured speakers"
           description="Local and regional engineers sharing real production experience — no vendor pitches, just Postgres."
         />
@@ -161,7 +170,7 @@ export default function HomePage() {
       {/* 5. Schedule teaser */}
       <Section>
         <SectionHeader
-          eyebrow="$ SELECT * FROM schedule ORDER BY start LIMIT 3"
+          eyebrow="Schedule"
           title="A day of Postgres, start to finish"
           description={`Single track on ${event.dateDisplay}. Sessions run from 09:00 to 17:00, with coffee and lunch in between.`}
         />
@@ -176,10 +185,7 @@ export default function HomePage() {
       {/* 6. Sponsors strip (flag-controlled) */}
       {features.showSponsors && visibleSponsors.length > 0 && (
         <Section className="border-hairline bg-surface border-t">
-          <SectionHeader
-            eyebrow="$ SELECT * FROM sponsors WHERE visible = true"
-            title="Supported by"
-          />
+          <SectionHeader eyebrow="Sponsors" title="Supported by" />
           <SponsorTier
             tier="platinum"
             sponsors={visibleSponsors.filter((s) => s.tier === "platinum")}

@@ -30,7 +30,7 @@ export default function RegisterPage() {
           </div>
         )}
 
-        <p className="mono-data text-ink-muted mx-auto mt-8 max-w-xl text-center text-[11px] leading-relaxed">
+        <p className="text-ink-muted mx-auto mt-8 max-w-xl text-center text-sm leading-relaxed">
           -- by registering you agree to be contacted about the event. we never share your data with
           sponsors or third parties.
         </p>

@@ -27,7 +27,7 @@ export function Footer() {
             {siteConfig.event.tagline}. Organized by volunteers from the {siteConfig.organizer.name}
             .
           </p>
-          <p className="mono-data mt-4 text-white/80">
+          <p className="mt-4 text-sm text-white/80">
             {siteConfig.event.dateDisplay} · {siteConfig.event.city}
           </p>
         </div>
@@ -36,7 +36,7 @@ export function Footer() {
         <FooterColumn title="Community" links={communityLinks} />
 
         <nav aria-label="Connect">
-          <h2 className="mono-data mb-4 text-white">Connect</h2>
+          <h2 className="mb-4 text-sm font-semibold text-white">Connect</h2>
           <ul className="space-y-2 text-sm">
             <li>
               <Link href="/contact" className="text-white/90 hover:text-white">
@@ -84,7 +84,7 @@ export function Footer() {
           <p>
             © {new Date().getFullYear()} {siteConfig.organizer.name}. All rights reserved.
           </p>
-          <p className="mono-data">
+          <p className="text-sm">
             PostgreSQL is a trademark of the PostgreSQL Global Development Group.
           </p>
         </div>
@@ -125,7 +125,7 @@ function FooterLogo() {
       </svg>
       <span className="flex flex-col leading-none">
         <span className="text-[15px] font-bold tracking-tight text-white">PG Day Egypt</span>
-        <span className="mono-data mt-0.5 text-[10px] text-white/80">2026</span>
+        <span className="mt-0.5 text-[10px] text-white/80">2026</span>
       </span>
     </Link>
   );
@@ -140,7 +140,7 @@ function FooterColumn({
 }) {
   return (
     <nav aria-label={title}>
-      <h2 className="mono-data mb-4 text-white">{title}</h2>
+      <h2 className="mb-4 text-sm font-semibold text-white">{title}</h2>
       <ul className="space-y-2 text-sm">
         {links.map((link) => (
           <li key={link.href}>

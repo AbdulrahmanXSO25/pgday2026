@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState, Suspense } from "react";
 import { apiFetch, ApiClientError } from "@/lib/api";
+import { PhotoUpload } from "@/components/photo-upload";
 
 type ApiSpeaker = {
   id: string;
@@ -13,6 +14,8 @@ type ApiSpeaker = {
   role?: string | null;
   company?: string | null;
   bio: string;
+  photoUrl?: string | null;
+  photoKey?: string | null;
   linkedin?: string | null;
   twitter?: string | null;
   isDraft?: number;
@@ -30,9 +33,12 @@ function SpeakerDetailPageInner() {
     company: "",
     linkedin: "",
     twitter: "",
+    photoUrl: "",
+    photoKey: "",
   });
   const [status, setStatus] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
+  const [saved, setSaved] = useState(false);
 
   const speakerQ = useQuery({
     queryKey: ["admin", "speaker", id],
@@ -48,6 +54,8 @@ function SpeakerDetailPageInner() {
         company: res.data.company ?? "",
         linkedin: res.data.linkedin ?? "",
         twitter: res.data.twitter ?? "",
+        photoUrl: res.data.photoUrl ?? "",
+        photoKey: res.data.photoKey ?? "",
       }));
       setStatus(res.data.isDraft === 1 ? "draft" : "published");
       return res.data;
@@ -67,11 +75,17 @@ function SpeakerDetailPageInner() {
           company: form.company,
           linkedin: form.linkedin,
           twitter: form.twitter,
+          photoUrl: form.photoUrl || null,
+          photoKey: form.photoKey || null,
         }),
       });
       return res.data;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["admin", "speakers"] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["admin", "speakers"] });
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+    },
     onError: (e) => setError(e instanceof ApiClientError ? e.message : String(e)),
   });
 
@@ -131,57 +145,98 @@ function SpeakerDetailPageInner() {
         </p>
       )}
 
-      <div className="card mt-6 max-w-2xl space-y-4 p-6">
-        {(
-          [
-            ["slug", "URL slug"],
-            ["name", "Full name"],
-            ["role", "Job title"],
-            ["company", "Company"],
-          ] as const
-        ).map(([k, label]) => (
-          <label key={k} className="block">
-            <span className="admin-label text-ink-muted text-xs uppercase">{label}</span>
-            <input
+      <div className="mt-6 grid max-w-4xl gap-6 lg:grid-cols-[240px_1fr]">
+        {/* Photo column */}
+        <div className="card h-fit p-5">
+          <PhotoUpload
+            kind="speaker_photo"
+            prefix="speakers"
+            currentUrl={form.photoUrl || undefined}
+            onUploaded={(url, key) => setForm((f) => ({ ...f, photoUrl: url, photoKey: key }))}
+            label="Portrait"
+            hint="JPG, PNG or WebP, up to 5 MB. Shown on the speaker card and detail page."
+          />
+        </div>
+
+        {/* Details column */}
+        <div className="card space-y-4 p-6">
+          <div className="grid gap-4 sm:grid-cols-2">
+            {(
+              [
+                ["slug", "URL slug"],
+                ["name", "Full name"],
+                ["role", "Job title"],
+                ["company", "Company"],
+              ] as const
+            ).map(([k, label]) => (
+              <label key={k} className="block">
+                <span className="admin-label text-ink-muted text-xs uppercase">{label}</span>
+                <input
+                  className="border-hairline bg-surface mt-1 w-full rounded-sm border px-3 py-2 text-sm"
+                  value={form[k]}
+                  onChange={(e) => setForm({ ...form, [k]: e.target.value })}
+                />
+              </label>
+            ))}
+          </div>
+
+          <label className="block">
+            <span className="admin-label text-ink-muted text-xs uppercase">Biography</span>
+            <textarea
               className="border-hairline bg-surface mt-1 w-full rounded-sm border px-3 py-2 text-sm"
-              value={form[k]}
-              onChange={(e) => setForm({ ...form, [k]: e.target.value })}
+              rows={6}
+              value={form.bio}
+              onChange={(e) => setForm({ ...form, bio: e.target.value })}
             />
           </label>
-        ))}
-        <label className="block">
-          <span className="admin-label text-ink-muted text-xs uppercase">bio</span>
-          <textarea
-            className="border-hairline bg-surface mt-1 w-full rounded-sm border px-3 py-2 text-sm"
-            rows={5}
-            value={form.bio}
-            onChange={(e) => setForm({ ...form, bio: e.target.value })}
-          />
-        </label>
-        <div className="flex gap-3 pt-2">
-          <button
-            onClick={() => saveMut.mutate()}
-            disabled={saveMut.isPending}
-            className="bg-pg-blue rounded-sm px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
-          >
-            {saveMut.isPending ? "Saving…" : "Save changes"}
-          </button>
-          <button
-            onClick={() => statusMut.mutate(status === "draft" ? "published" : "draft")}
-            disabled={statusMut.isPending}
-            className="border-hairline bg-surface-raised rounded-sm border px-4 py-2 text-sm font-medium disabled:opacity-50"
-          >
-            {status === "draft" ? "Mark published" : "Mark draft"}
-          </button>
-          <button
-            onClick={() => {
-              if (confirm("Delete this speaker?")) delMut.mutate();
-            }}
-            disabled={delMut.isPending}
-            className="text-pg-amber rounded-sm px-4 py-2 text-sm font-medium hover:underline"
-          >
-            Delete
-          </button>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <label className="block">
+              <span className="admin-label text-ink-muted text-xs uppercase">LinkedIn URL</span>
+              <input
+                className="border-hairline bg-surface mt-1 w-full rounded-sm border px-3 py-2 text-sm"
+                placeholder="https://linkedin.com/in/…"
+                value={form.linkedin}
+                onChange={(e) => setForm({ ...form, linkedin: e.target.value })}
+              />
+            </label>
+            <label className="block">
+              <span className="admin-label text-ink-muted text-xs uppercase">X / Twitter URL</span>
+              <input
+                className="border-hairline bg-surface mt-1 w-full rounded-sm border px-3 py-2 text-sm"
+                placeholder="https://x.com/…"
+                value={form.twitter}
+                onChange={(e) => setForm({ ...form, twitter: e.target.value })}
+              />
+            </label>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-3 pt-2">
+            <button
+              onClick={() => saveMut.mutate()}
+              disabled={saveMut.isPending}
+              className="bg-pg-blue rounded-sm px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
+            >
+              {saveMut.isPending ? "Saving…" : "Save changes"}
+            </button>
+            {saved && <span className="text-sm text-green-600">Saved ✓</span>}
+            <button
+              onClick={() => statusMut.mutate(status === "draft" ? "published" : "draft")}
+              disabled={statusMut.isPending}
+              className="border-hairline bg-surface-raised rounded-sm border px-4 py-2 text-sm font-medium disabled:opacity-50"
+            >
+              {status === "draft" ? "Mark published" : "Mark draft"}
+            </button>
+            <button
+              onClick={() => {
+                if (confirm("Delete this speaker?")) delMut.mutate();
+              }}
+              disabled={delMut.isPending}
+              className="text-pg-amber rounded-sm px-4 py-2 text-sm font-medium hover:underline"
+            >
+              Delete
+            </button>
+          </div>
         </div>
       </div>
     </div>

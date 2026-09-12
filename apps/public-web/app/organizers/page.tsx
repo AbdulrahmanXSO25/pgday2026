@@ -14,7 +14,7 @@ export default function OrganizersPage() {
   return (
     <>
       <PageHero
-        eyebrow="$ SELECT * FROM organizers"
+        eyebrow="Organizers"
         title="Organizers"
         description="The volunteers behind PG Day Egypt 2026."
       />
@@ -23,7 +23,7 @@ export default function OrganizersPage() {
           {organizers.map((o) => (
             <div key={o.id} className="card p-6">
               <h3 className="font-semibold">{o.name}</h3>
-              <p className="mono-data text-pg-blue text-xs">{o.role}</p>
+              <p className="text-pg-blue text-xs">{o.role}</p>
               <p className="text-ink-muted mt-2 text-sm leading-relaxed">{o.bio}</p>
             </div>
           ))}

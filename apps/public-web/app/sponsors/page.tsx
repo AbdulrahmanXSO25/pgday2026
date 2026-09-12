@@ -11,7 +11,7 @@ export default function SponsorsPage() {
   return (
     <>
       <PageHero
-        eyebrow="$ SELECT * FROM sponsors WHERE visible = true"
+        eyebrow="Sponsors"
         title="Sponsors"
         description="Thank you to our sponsors — without them PG Day Egypt would not be possible."
       />

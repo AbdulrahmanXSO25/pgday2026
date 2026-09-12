@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { ScheduleItem } from "@/lib/content";
 import { getSpeaker } from "@/lib/content";
 import { Badge } from "@/components/ui/badge";
@@ -6,17 +7,22 @@ export function ScheduleRow({ item }: { item: ScheduleItem }) {
   const speakers = item.speakerIds.map(getSpeaker).filter(Boolean);
 
   return (
-    <div className="card flex flex-col gap-3 p-4 sm:flex-row sm:items-start sm:justify-between">
-      <div className="mono-data text-ink-muted shrink-0 text-xs">
-        {item.start} — {item.end}
+    <Link
+      href={`/schedule/detail?id=${item.id}`}
+      className="card hover:border-pg-blue group flex flex-col gap-3 p-4 transition-colors sm:flex-row sm:items-start sm:justify-between"
+    >
+      <div className="text-ink-muted shrink-0 text-sm font-medium tabular-nums">
+        {item.start} – {item.end}
       </div>
       <div className="flex-1 sm:ml-6">
-        <h3 className="text-pg-blue text-base font-semibold">{item.title}</h3>
+        <h3 className="text-pg-blue text-base font-semibold group-hover:underline">{item.title}</h3>
         {item.abstract && (
-          <p className="text-ink-muted mt-1 text-sm leading-relaxed">{item.abstract}</p>
+          <p className="text-ink-muted mt-1 line-clamp-2 text-sm leading-relaxed">
+            {item.abstract}
+          </p>
         )}
         {speakers.length > 0 && (
-          <p className="mono-data text-ink-muted mt-2">{speakers.map((s) => s!.name).join(", ")}</p>
+          <p className="text-ink-muted mt-2 text-sm">{speakers.map((s) => s!.name).join(", ")}</p>
         )}
       </div>
       <Badge
@@ -25,6 +31,6 @@ export function ScheduleRow({ item }: { item: ScheduleItem }) {
       >
         {item.type}
       </Badge>
-    </div>
+    </Link>
   );
 }

@@ -53,6 +53,20 @@ export const CfpSpeakerSchema = z
       .transform((v) =>
         v === undefined || (v as string).trim() === "" ? undefined : (v as string).trim()
       ),
+    // §19.1 — portrait uploaded via media presign (URL + storage key)
+    photoUrl: z
+      .string()
+      .url({ error: "Photo URL must be a valid URL." })
+      .max(500)
+      .optional()
+      .nullable()
+      .transform((v) => (v === undefined || v === null || v.trim() === "" ? undefined : v.trim())),
+    photoKey: z
+      .string()
+      .max(300)
+      .optional()
+      .nullable()
+      .transform((v) => (v === undefined || v === null || v.trim() === "" ? undefined : v.trim())),
     // §19.1 — primary marker (bool or 0/1)
     isPrimary: z
       .union([z.boolean(), z.number().int().min(0).max(1)])
@@ -154,6 +168,20 @@ export const CfpSubmissionSchema = z
       .transform((v) =>
         v === undefined || (v as string).trim() === "" ? undefined : (v as string).trim()
       ),
+    // Portrait uploaded via public CFP presign (media presign → direct PUT)
+    submitterPhotoUrl: z
+      .string()
+      .url({ error: "Photo URL must be a valid URL." })
+      .max(500)
+      .optional()
+      .nullable()
+      .transform((v) => (v === undefined || v === null || v.trim() === "" ? undefined : v.trim())),
+    submitterPhotoKey: z
+      .string()
+      .max(300)
+      .optional()
+      .nullable()
+      .transform((v) => (v === undefined || v === null || v.trim() === "" ? undefined : v.trim())),
     bio: z
       .string()
       .max(2000)
@@ -235,6 +263,8 @@ export type NormalizedCfpPayload = {
   submitterName: string;
   submitterEmail: string;
   submitterBio?: string;
+  submitterPhotoUrl?: string;
+  submitterPhotoKey?: string;
   eventId?: string;
   coSpeakers: CfpSpeakerPayload[];
 };
@@ -256,6 +286,10 @@ export function normalizeCfpPayload(payload: CfpSubmissionPayload): NormalizedCf
     payload.notes ??
     payload.notesToOrganizers ??
     undefined) as string | undefined;
+  const submitterPhotoUrl = (payload.submitterPhotoUrl ?? primary?.photoUrl ?? undefined) as
+    string | undefined;
+  const submitterPhotoKey = (payload.submitterPhotoKey ?? primary?.photoKey ?? undefined) as
+    string | undefined;
   const eventId = (payload.eventId ?? payload.event_id ?? undefined) as string | undefined;
 
   // Merge speakers / coSpeakers — if speakers includes primary, treat tail as coSpeakers
@@ -283,6 +317,8 @@ export function normalizeCfpPayload(payload: CfpSubmissionPayload): NormalizedCf
     bio: s.bio,
     company: s.company,
     role: s.role,
+    photoUrl: s.photoUrl,
+    photoKey: s.photoKey,
   }));
 
   return {
@@ -293,6 +329,8 @@ export function normalizeCfpPayload(payload: CfpSubmissionPayload): NormalizedCf
     submitterName: submitterName.trim(),
     submitterEmail,
     submitterBio: submitterBio?.trim() || undefined,
+    submitterPhotoUrl: submitterPhotoUrl?.trim() || undefined,
+    submitterPhotoKey: submitterPhotoKey?.trim() || undefined,
     eventId: eventId?.trim() || undefined,
     coSpeakers,
   };

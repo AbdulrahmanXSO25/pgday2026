@@ -5,7 +5,7 @@ export function SponsorTier({ tier, sponsors }: { tier: Tier; sponsors: Sponsor[
   if (sponsors.length === 0) return null;
   return (
     <div>
-      <h3 className="mono-data text-pg-blue mb-3">{sponsorTierLabels[tier]}</h3>
+      <h3 className="text-pg-blue mb-3 text-sm font-semibold">{sponsorTierLabels[tier]}</h3>
       <div className="grid gap-4 sm:grid-cols-3">
         {sponsors.map((s) => (
           <a

@@ -19,7 +19,7 @@ export default function VenuePage() {
       />
       <Section>
         <div className="card p-8 text-center">
-          <p className="mono-data text-pg-blue">venue_status: tba</p>
+          <p className="text-pg-blue text-sm">Venue to be announced</p>
           <p className="text-ink-muted mt-3">Venue details will be announced soon. Stay tuned.</p>
         </div>
       </Section>
