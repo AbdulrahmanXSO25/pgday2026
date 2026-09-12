@@ -260,6 +260,9 @@ importers:
 
   packages/auth:
     dependencies:
+      '@noble/hashes':
+        specifier: ^1.8.0
+        version: 1.8.0
       hash-wasm:
         specifier: ^4.12.0
         version: 4.12.0

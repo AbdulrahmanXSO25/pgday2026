@@ -9,6 +9,7 @@
     "./session": "./src/session.ts"
   },
   "dependencies": {
+    "@noble/hashes": "^1.8.0",
     "hash-wasm": "^4.12.0"
   },
   "scripts": {
