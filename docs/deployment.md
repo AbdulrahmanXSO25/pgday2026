@@ -100,3 +100,60 @@ wrangler d1 execute pgegypt-db --remote --command \
 - D1: Time Travel (point-in-time) for fat-fingered deletes; R2 `backups/…` for full restore.
 - Public site: re-run `deploy-public-web.yml` with an older `content-snapshots/…` key
   (manual `workflow_dispatch` input).
+
+## 10. Production operations (Q6 hardening)
+
+### Secrets on the API worker (set once)
+
+```bash
+wrangler secret put RESEND_API_KEY          # Resend dashboard
+wrangler secret put GITHUB_DISPATCH_TOKEN   # fine-grained PAT, contents:write on this repo
+wrangler secret put R2_ACCOUNT_ID           # ab4321ff2699dcc01b47d264c605abb8
+wrangler secret put R2_ACCESS_KEY_ID        # R2 API token (pgegypt-media, Object Read & Write)
+wrangler secret put R2_SECRET_ACCESS_KEY    # same token
+wrangler secret put R2_BUCKET_NAME          # pgegypt-media
+```
+
+Until `RESEND_API_KEY` is set, transactional emails are enqueued but not delivered.
+Until the R2 token secrets are set, media presigned uploads return a clear 500.
+
+### Staging environment (recommended before the event)
+
+- Add `[env.staging]` blocks to `apps/api/wrangler.jsonc` (own D1 `pgegypt-db-staging`,
+  R2 bucket or prefix, Queue) and deploy from a `staging` branch.
+- Pages gives per-branch preview URLs for the frontends automatically.
+
+### Backup restore drill
+
+- Run once: `wrangler d1 time-travel restore pgegypt-db --timestamp=<T>` against a scratch DB
+  to confirm the restore path works before you need it.
+- `backup.yml` exports D1 → R2 daily (`backups/pgegypt-2026/<date>/db.sql`).
+
+### Email deliverability (Resend)
+
+- Verify `pgegypt.org` in Resend: add the SPF TXT + 3 DKIM CNAME records it provides.
+- Add DMARC: `v=DMARC1; p=quarantine; rua=mailto:postmaster@pgegypt.org`.
+- Without SPF+DKIM+DMARC, CFP/registration emails risk spam or rejection.
+
+### Data retention (PII)
+
+- Attendee PII (names, emails) lives in D1 `registrations` + `audit_logs` (redacted).
+- Document a retention policy: e.g., keep registrations 12 months post-event, then purge
+  (`DELETE` + D1 Time Travel backup retained). Check-in tokens are stored hashed.
+
+### Load testing before the event
+
+- Registration/CFP traffic is spiky (announcement bursts). Run a synthetic burst against
+  `/v1/registrations` + `/v1/cfp/submissions` (rate limit is 5/hour/IP — use distinct IPs
+  or a load-test account) and watch D1 concurrency + Queue backpressure.
+
+### Migration rollback
+
+- Migrations 0001–0007 are forward-only. Rollback = restore from D1 Time Travel / R2 backup.
+  This is a documented decision, not an open question.
+
+### Observability
+
+- Workers Logs enabled on all three workers (`observability.enabled`).
+- Add error-rate alerts in the Cloudflare dashboard; consider Sentry
+  (`@sentry/cloudflare`) for exception tracking with the same PII-redaction discipline.

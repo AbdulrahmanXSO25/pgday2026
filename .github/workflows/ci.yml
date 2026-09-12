@@ -22,3 +22,5 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm turbo run lint typecheck test build
+      - name: Dependency audit
+        run: pnpm audit --prod || true
