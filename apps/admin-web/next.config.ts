@@ -28,6 +28,9 @@ const apiOrigin = (() => {
   }
 })();
 
+// R2 S3 endpoint — presigned media uploads PUT directly to it from the browser
+const r2Origin = (process.env.NEXT_PUBLIC_R2_ENDPOINT ?? "").trim();
+
 const nextConfig: NextConfig = {
   output: "export",
   images: { unoptimized: true },
@@ -42,7 +45,7 @@ const nextConfig: NextConfig = {
     const secureHeaders = [
       {
         key: "Content-Security-Policy",
-        value: `default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' ws: wss: ${apiOrigin}; frame-ancestors 'none'; base-uri 'none'; form-action 'self'`,
+        value: `default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' ws: wss: ${apiOrigin}${r2Origin ? ` ${r2Origin}` : ""}; frame-ancestors 'none'; base-uri 'none'; form-action 'self'`,
       },
       { key: "Strict-Transport-Security", value: "max-age=31536000; includeSubDomains; preload" },
       { key: "X-Frame-Options", value: "DENY" },
