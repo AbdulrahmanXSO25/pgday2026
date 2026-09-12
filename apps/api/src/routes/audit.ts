@@ -22,17 +22,35 @@ export function auditRoutes() {
     const query = c.req.query() as Record<string, string>;
     const limit = query.limit ? Number(query.limit) : undefined;
     const offset = query.offset ? Number(query.offset) : undefined;
+    const actorId = (query.actorId ?? query.actor_id ?? query.userId ?? undefined) as
+      string | undefined;
+    const targetType = (query.targetType ?? query.target_type ?? query.category ?? undefined) as
+      string | undefined;
+    // Date range — accept unix seconds or YYYY-MM-DD
+    const parseDate = (v: string | undefined): number | undefined => {
+      if (!v) return undefined;
+      const n = Number(v);
+      if (Number.isFinite(n)) return n;
+      const ms = Date.parse(v);
+      return Number.isFinite(ms) ? Math.floor(ms / 1000) : undefined;
+    };
+    const from = parseDate(query.from ?? query.startDate ?? undefined);
+    const to = parseDate(query.to ?? query.endDate ?? undefined);
 
-    const data = await auditService.listAuditLogs(db, {
+    const { rows, total } = await auditService.listAuditLogs(db, {
       limit: Number.isFinite(limit as number) ? (limit as number) : undefined,
       offset: Number.isFinite(offset as number) ? (offset as number) : undefined,
+      actorId,
+      targetType,
+      from,
+      to,
     });
 
     return c.json(
       {
         success: true as const,
-        data,
-        meta: { count: data.length },
+        data: rows,
+        meta: { count: rows.length, total },
         requestId: c.get("requestId" as never) as string | undefined,
       },
       200
