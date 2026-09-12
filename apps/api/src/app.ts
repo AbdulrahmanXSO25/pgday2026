@@ -61,18 +61,19 @@ export type CreateAppOptions = {
 export function createApp(options: CreateAppOptions = {}) {
   const app = new Hono<AppEnv>();
 
-  // 1) Request ID must be first — downstream middleware/handlers depend on it
+  // 1) CORS must be FIRST — preflight short-circuits, and every response
+  //    (including errors) needs CORS headers for cross-origin clients.
+  app.use("*", corsMiddleware());
+
+  // 2) Request ID — downstream middleware/handlers depend on it
   app.use("*", requestIdMiddleware());
 
-  // 2) Secure headers — CSP, HSTS, X-Frame-Options etc. Must be early to cover all responses
+  // 3) Secure headers — CSP, HSTS, X-Frame-Options etc. Must be early to cover all responses
   app.use("*", secureHeadersMiddleware());
 
-  // 3) Structured logger — after requestId so it can log the id
+  // 4) Structured logger — after requestId so it can log the id
   //    hono/logger prints method/path/status/duration; keeps prod logs redacted
   app.use("*", logger());
-
-  // 4) CORS — public routes open (no credentials), admin same-origin via proxy
-  app.use("*", corsMiddleware());
 
   // 5) DI injection — db/storage made available via c.get('db') / c.get('storage')
   //    Routes never import better-sqlite3 or D1 or S3 directly.

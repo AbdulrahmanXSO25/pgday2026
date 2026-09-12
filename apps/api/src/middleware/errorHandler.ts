@@ -1,6 +1,7 @@
 import type { Context } from "hono";
 import { HTTPException } from "hono/http-exception";
 import type { AppEnv } from "../app.js";
+import { applyCorsHeaders } from "./cors.js";
 
 /**
  * Consistent API error envelope.
@@ -93,14 +94,17 @@ export function errorHandler(err: Error, c: Context<AppEnv>): Response {
     const status = err.status;
     const code = statusToCode(status);
     const message = err.message || httpStatusMessage(status);
-    return c.json(
-      {
-        success: false as const,
-        error: code,
-        message,
-        requestId,
-      },
-      status
+    return applyCorsHeaders(
+      c,
+      c.json(
+        {
+          success: false as const,
+          error: code,
+          message,
+          requestId,
+        },
+        status
+      )
     );
   }
 
@@ -116,7 +120,10 @@ export function errorHandler(err: Error, c: Context<AppEnv>): Response {
     if (!isProd(c) && err.stack) {
       payload.stack = err.stack;
     }
-    return c.json(payload, err.status as 400 | 401 | 403 | 404 | 409 | 422 | 429 | 500 | 501);
+    return applyCorsHeaders(
+      c,
+      c.json(payload, err.status as 400 | 401 | 403 | 404 | 409 | 422 | 429 | 500 | 501)
+    );
   }
 
   // Generic unexpected error — log with requestId (redacted), return 500 without stack in prod
@@ -135,7 +142,7 @@ export function errorHandler(err: Error, c: Context<AppEnv>): Response {
   };
   if (!prod && err.stack) body.stack = err.stack;
 
-  return c.json(body, 500);
+  return applyCorsHeaders(c, c.json(body, 500));
 }
 
 function statusToCode(status: number): ErrorCode {

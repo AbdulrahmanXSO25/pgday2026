@@ -2,7 +2,7 @@ import { createApp } from "./app.js";
 import { drizzle } from "drizzle-orm/d1";
 import * as schema from "@pgegypt/db";
 import type { D1DatabaseLike } from "@pgegypt/db";
-import { createR2StorageFromEnv } from "@pgegypt/storage";
+import { createR2StorageFromWorkerEnv } from "@pgegypt/storage";
 /**
  * Cloudflare Workers entry — production (Phase 7).
  * Exports `fetch` and `queue` handlers.
@@ -17,10 +17,12 @@ export type WorkerEnv = {
   R2_BUCKET?: unknown;
   QUEUE?: { send: (msg: unknown) => Promise<void> };
   RUNTIME?: string;
-  S3_ENDPOINT?: string;
-  S3_ACCESS_KEY_ID?: string;
-  S3_SECRET_ACCESS_KEY?: string;
-  S3_BUCKET?: string;
+  // R2 S3-API credentials — presigned URLs only (bindings cannot presign)
+  R2_ACCOUNT_ID?: string;
+  R2_ACCESS_KEY_ID?: string;
+  R2_SECRET_ACCESS_KEY?: string;
+  R2_BUCKET_NAME?: string;
+  MEDIA_PUBLIC_BASE_URL?: string;
   RESEND_API_KEY?: string;
   EMAIL_FROM?: string;
   SITE_URL?: string;
@@ -42,7 +44,10 @@ function createD1Db(env: WorkerEnv): D1Drizzle {
 function buildApp(env: WorkerEnv) {
   const runtime = env.RUNTIME ?? "production";
   const db = createD1Db(env);
-  const storage = createR2StorageFromEnv(env as unknown as Record<string, string | undefined>);
+  // Hybrid R2: native binding for object ops, S3-API (aws4fetch) for presign.
+  // Throws only if the R2_BUCKET binding is missing — presign creds are optional
+  // (media uploads degrade to a clear 500 until secrets are set).
+  const storage = createR2StorageFromWorkerEnv(env as unknown as Record<string, unknown>);
   return createApp({ db: db as never, storage, runtime });
 }
 
