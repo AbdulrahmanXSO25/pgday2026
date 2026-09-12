@@ -1,9 +1,12 @@
 /**
  * session.ts — opaque session tokens, hashing, expiry, cookie helpers.
- * Node+Workers parity: uses WebCrypto when available, Node crypto fallback.
+ * Node+Workers parity: pure-JS SHA-256 via @noble/hashes (no node:crypto —
+ * createRequire/node:crypto throws in the Workers runtime, which silently
+ * broke bearer-token auth in prod).
  * Pure functions, explicit errors, no PII logging.
  */
-import { createRequire } from "node:module";
+import { sha256 } from "@noble/hashes/sha256";
+import { bytesToHex } from "@noble/hashes/utils";
 
 export const SESSION_COOKIE = "pgegypt_session" as const;
 export const SESSION_TTL_SECONDS = 60 * 60 * 24 * 7; // 7 days
@@ -26,14 +29,8 @@ export function generateSessionToken(): string {
   try {
     crypto.getRandomValues(bytes);
   } catch {
-    try {
-      const _require = createRequire(import.meta.url);
-      const nodeCrypto = _require("node:crypto") as { randomBytes: (n: number) => Buffer };
-      const buf = nodeCrypto.randomBytes(32);
-      for (let i = 0; i < 32; i++) bytes[i] = buf[i] as number;
-    } catch {
-      for (let i = 0; i < 32; i++) bytes[i] = Math.floor(Math.random() * 256);
-    }
+    // Last-resort fallback (crypto.getRandomValues exists in Node + Workers)
+    for (let i = 0; i < 32; i++) bytes[i] = Math.floor(Math.random() * 256);
   }
   return Array.from(bytes)
     .map((b) => b.toString(16).padStart(2, "0"))
@@ -42,38 +39,19 @@ export function generateSessionToken(): string {
 
 /**
  * SHA-256 hex of token — stored as token_hash (unique).
- * Sync version for Node (better-sqlite3) — uses node:crypto createHash.
+ * Pure JS via @noble/hashes — works in Node AND Workers (node:crypto via
+ * createRequire throws in workerd).
  */
 export function hashTokenSync(token: string): string {
   if (!token) throw new Error("hashTokenSync: token required");
-  try {
-    const _require = createRequire(import.meta.url);
-    const nodeCrypto = _require("node:crypto") as {
-      createHash: (alg: string) => { update: (d: string) => { digest: (enc: string) => string } };
-    };
-    return nodeCrypto.createHash("sha256").update(token).digest("hex");
-  } catch {
-    throw new Error("hashTokenSync: node crypto unavailable — use hashToken()");
-  }
+  return bytesToHex(sha256(new TextEncoder().encode(token)));
 }
 
 /**
- * Async SHA-256 hex — Workers parity via SubtleCrypto.
+ * Async SHA-256 hex — same result as hashTokenSync (kept for API symmetry).
  */
 export async function hashToken(token: string): Promise<string> {
-  if (!token) throw new Error("hashToken: token required");
-  // Prefer sync Node path when available (fast, no subtle)
-  try {
-    return hashTokenSync(token);
-  } catch {
-    // Workers / fallback: SubtleCrypto
-    const enc = new TextEncoder();
-    const data = enc.encode(token);
-    const digest = await crypto.subtle.digest("SHA-256", data);
-    return Array.from(new Uint8Array(digest))
-      .map((b) => b.toString(16).padStart(2, "0"))
-      .join("");
-  }
+  return hashTokenSync(token);
 }
 
 /**
