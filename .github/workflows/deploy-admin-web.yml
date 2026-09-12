@@ -37,3 +37,5 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
         run: pnpm exec wrangler pages deploy out --project-name=pgegypt-admin-web
         working-directory: apps/admin-web
+      - name: Post-deploy smoke check
+        run: node scripts/post-deploy-smoke.mjs pages https://pgegypt-admin-web.pages.dev

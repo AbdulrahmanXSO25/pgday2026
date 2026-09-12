@@ -41,3 +41,5 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
         run: pnpm exec wrangler deploy
         working-directory: apps/api
+      - name: Post-deploy smoke check
+        run: node scripts/post-deploy-smoke.mjs api https://pgegypt-api.abdulrahmannader-123.workers.dev
