@@ -5,7 +5,7 @@ const eslintConfig = [
   ...nextConfig,
   ...nextTypeScriptConfig,
   {
-    ignores: ["node_modules/**", ".next/**", "out/**", "next-env.d.ts"],
+    ignores: ["node_modules/**", ".next/**", ".open-next/**", "out/**", "next-env.d.ts"],
   },
   {
     rules: { "@next/next/no-img-element": "off" },
