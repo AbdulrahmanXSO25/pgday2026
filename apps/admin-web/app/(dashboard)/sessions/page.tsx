@@ -29,6 +29,8 @@ type ApiSession = {
   endsAtEpoch?: number | null;
   ends_at_epoch?: number | null;
   speakerIds?: string[];
+  status?: string;
+  isDraft?: number;
 };
 
 type ApiRoom = {
@@ -90,6 +92,25 @@ export default function SessionsPage() {
           : e instanceof Error
             ? e.message
             : "Create failed";
+      setError(msg);
+    },
+  });
+
+  const togglePublish = useMutation({
+    mutationFn: async ({ id, status }: { id: string; status: "published" | "draft" }) => {
+      const res = await apiFetch<{ success: true; data: ApiSession }>(`/sessions/${id}/status`, {
+        method: "PATCH",
+        body: JSON.stringify({ status }),
+      });
+      return res.data;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["admin", "sessions"] });
+      setError(null);
+    },
+    onError: (e: unknown) => {
+      const msg =
+        e instanceof ApiClientError ? e.message : e instanceof Error ? e.message : "Update failed";
       setError(msg);
     },
   });
@@ -277,11 +298,38 @@ export default function SessionsPage() {
                       : ""}
                   </p>
                 </div>
-                <span className="admin-label bg-surface-raised border-hairline rounded-sm border px-2 py-1 text-xs">
-                  {(row.speakerIds ?? []).length === 1
-                    ? "1 speaker"
-                    : `${(row.speakerIds ?? []).length} speakers`}
-                </span>
+                <div className="flex items-center gap-2">
+                  <span
+                    className={`rounded-sm px-2 py-0.5 text-[10px] font-semibold tracking-wide uppercase ${
+                      row.status === "published" || !row.isDraft
+                        ? "bg-pg-blue/10 text-pg-blue"
+                        : "bg-pg-amber/10 text-pg-amber"
+                    }`}
+                  >
+                    {row.status === "published" || !row.isDraft ? "Published" : "Draft"}
+                  </span>
+                  <button
+                    onClick={() =>
+                      togglePublish.mutate({
+                        id: row.id,
+                        status: row.status === "published" || !row.isDraft ? "draft" : "published",
+                      })
+                    }
+                    disabled={togglePublish.isPending}
+                    className={`rounded-sm border px-2.5 py-1 text-xs font-semibold disabled:opacity-50 ${
+                      row.status === "published" || !row.isDraft
+                        ? "border-hairline bg-surface text-ink hover:bg-surfaceRaised"
+                        : "border-pg-blue bg-pg-blue hover:bg-pg-blue-dark text-white"
+                    }`}
+                  >
+                    {row.status === "published" || !row.isDraft ? "Unpublish" : "Publish"}
+                  </button>
+                  <span className="admin-label bg-surface-raised border-hairline rounded-sm border px-2 py-1 text-xs">
+                    {(row.speakerIds ?? []).length === 1
+                      ? "1 speaker"
+                      : `${(row.speakerIds ?? []).length} speakers`}
+                  </span>
+                </div>
               </li>
             ))}
           </ol>
