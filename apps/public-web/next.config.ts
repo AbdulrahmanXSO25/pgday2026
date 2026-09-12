@@ -40,6 +40,7 @@ const secureHeaders = [
 ];
 
 const nextConfig: NextConfig = {
+  output: "export",
   images: {
     unoptimized: true,
   },

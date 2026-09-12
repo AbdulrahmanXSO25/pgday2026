@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 60" role="img" aria-label="Fawry placeholder logo">
+  <rect x="18" y="14" width="24" height="32" rx="3" fill="none" stroke="#4A5A66" stroke-width="3"/>
+  <path d="M28 20v20" stroke="#4A5A66" stroke-width="2.5"/>
+  <text x="56" y="37" font-family="monospace" font-size="22" font-weight="bold" fill="#4A5A66">FAWRY</text>
+</svg>
