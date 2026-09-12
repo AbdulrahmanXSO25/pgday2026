@@ -16,6 +16,8 @@ type ApiEvent = {
   tagline?: string | null;
   date: string;
   dateDisplay?: string | null;
+  startTime?: string | null;
+  endTime?: string | null;
   city: string;
   venueStatus: string;
   venueName?: string | null;
@@ -29,6 +31,10 @@ export default function SettingsPage() {
   const [form, setForm] = useState({
     name: "",
     tagline: "",
+    date: "",
+    dateDisplay: "",
+    startTime: "",
+    endTime: "",
     city: "",
     venueStatus: "tba",
     venueName: "",
@@ -52,6 +58,10 @@ export default function SettingsPage() {
       setForm({
         name: res.data.name,
         tagline: res.data.tagline ?? "",
+        date: res.data.date ?? "",
+        dateDisplay: res.data.dateDisplay ?? "",
+        startTime: res.data.startTime ?? "",
+        endTime: res.data.endTime ?? "",
         city: res.data.city,
         venueStatus: res.data.venueStatus,
         venueName: res.data.venueName ?? "",
@@ -71,6 +81,10 @@ export default function SettingsPage() {
         body: JSON.stringify({
           name: form.name,
           tagline: form.tagline,
+          date: form.date,
+          dateDisplay: form.dateDisplay,
+          startTime: form.startTime,
+          endTime: form.endTime,
           city: form.city,
           venueStatus: form.venueStatus,
           venueName: form.venueStatus === "confirmed" ? form.venueName : null,
@@ -147,6 +161,46 @@ export default function SettingsPage() {
             onChange={(e) => setForm({ ...form, tagline: e.target.value })}
           />
         </label>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <label className="block">
+            <span className="admin-label text-ink-muted text-xs uppercase">Event date</span>
+            <input
+              type="date"
+              className="border-hairline bg-surface mt-1 w-full rounded-sm border px-3 py-2 text-sm"
+              value={form.date}
+              onChange={(e) => setForm({ ...form, date: e.target.value })}
+            />
+          </label>
+          <label className="block">
+            <span className="admin-label text-ink-muted text-xs uppercase">
+              Date display{" "}
+              <span className="font-normal normal-case">(e.g. Saturday, October 10)</span>
+            </span>
+            <input
+              className="border-hairline bg-surface mt-1 w-full rounded-sm border px-3 py-2 text-sm"
+              value={form.dateDisplay}
+              onChange={(e) => setForm({ ...form, dateDisplay: e.target.value })}
+            />
+          </label>
+          <label className="block">
+            <span className="admin-label text-ink-muted text-xs uppercase">Start time</span>
+            <input
+              type="time"
+              className="border-hairline bg-surface mt-1 w-full rounded-sm border px-3 py-2 text-sm"
+              value={form.startTime}
+              onChange={(e) => setForm({ ...form, startTime: e.target.value })}
+            />
+          </label>
+          <label className="block">
+            <span className="admin-label text-ink-muted text-xs uppercase">End time</span>
+            <input
+              type="time"
+              className="border-hairline bg-surface mt-1 w-full rounded-sm border px-3 py-2 text-sm"
+              value={form.endTime}
+              onChange={(e) => setForm({ ...form, endTime: e.target.value })}
+            />
+          </label>
+        </div>
         <label className="block">
           <span className="admin-label text-ink-muted text-xs uppercase">City</span>
           <input
