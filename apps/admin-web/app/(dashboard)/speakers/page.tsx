@@ -59,6 +59,25 @@ export default function SpeakersPage() {
     },
   });
 
+  const togglePublish = useMutation({
+    mutationFn: async ({ id, isDraft }: { id: string; isDraft: number }) => {
+      const res = await apiFetch<{ success: true; data: ApiSpeaker }>(`/speakers/${id}`, {
+        method: "PATCH",
+        body: JSON.stringify({ isDraft }),
+      });
+      return res.data;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["admin", "speakers"] });
+      setError(null);
+    },
+    onError: (e: unknown) => {
+      const msg =
+        e instanceof ApiClientError ? e.message : e instanceof Error ? e.message : "Update failed";
+      setError(msg);
+    },
+  });
+
   const onCreate = (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -168,14 +187,38 @@ export default function SpeakersPage() {
           <ul className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {(speakersQ.data ?? []).map((row) => (
               <li key={row.id} className="card p-4">
-                <h3 className="text-base font-bold">{row.name}</h3>
+                <div className="flex items-start justify-between gap-2">
+                  <h3 className="text-base font-bold">{row.name}</h3>
+                  <span
+                    className={`rounded-sm px-2 py-0.5 text-[10px] font-semibold tracking-wide uppercase ${
+                      row.isDraft ? "bg-pg-amber/10 text-pg-amber" : "bg-pg-blue/10 text-pg-blue"
+                    }`}
+                  >
+                    {row.isDraft ? "Draft" : "Published"}
+                  </span>
+                </div>
                 <p className="admin-label text-ink-muted mt-1 text-xs">
                   {row.role ?? "—"} · {row.company ?? "—"}
                 </p>
                 <p className="text-ink-muted mt-2 line-clamp-3 text-sm leading-relaxed">
                   {row.bio}
                 </p>
-                <p className="admin-label text-ink-muted mt-3 text-xs">/{row.slug}</p>
+                <div className="mt-3 flex items-center justify-between">
+                  <p className="admin-label text-ink-muted text-xs">/{row.slug}</p>
+                  <button
+                    onClick={() =>
+                      togglePublish.mutate({ id: row.id, isDraft: row.isDraft ? 0 : 1 })
+                    }
+                    disabled={togglePublish.isPending}
+                    className={`rounded-sm border px-2.5 py-1 text-xs font-semibold disabled:opacity-50 ${
+                      row.isDraft
+                        ? "border-pg-blue bg-pg-blue hover:bg-pg-blue-dark text-white"
+                        : "border-hairline bg-surface text-ink hover:bg-surfaceRaised"
+                    }`}
+                  >
+                    {row.isDraft ? "Publish" : "Unpublish"}
+                  </button>
+                </div>
               </li>
             ))}
           </ul>
