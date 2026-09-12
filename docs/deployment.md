@@ -56,9 +56,9 @@ wrangler secret put GITHUB_REPO
 
 ## 4. DNS
 
-- `2026day.pgegypt.org` → `pgegypt-public-web` Worker (proxied)
-- `admin.pgegypt.org` → `pgegypt-admin-web` Worker (proxied)
-- `api.pgegypt.org` → `pgegypt-api` Worker (proxied)
+- `https://pgegypt-public-web.abdulrahmannader-123.workers.dev` → `pgegypt-public-web` Worker (proxied)
+- `https://pgegypt-admin-web.abdulrahmannader-123.workers.dev` → `pgegypt-admin-web` Worker (proxied)
+- `https://pgegypt-api.abdulrahmannader-123.workers.dev` → `pgegypt-api` Worker (proxied)
 - (optional) `media.pgegypt.org` → R2 public bucket for hotlinked images
 
 Update `NEXT_PUBLIC_SITE_URL`, `NEXT_PUBLIC_API_BASE_URL`, `API_BASE_URL` vars in the
@@ -88,11 +88,11 @@ wrangler d1 execute pgegypt-db --remote --command \
 
 ## 8. Post-deploy verification
 
-- `curl https://api.pgegypt.org/v1/health` → `{"success":true,"status":"ok"}`
-- Login at `https://admin.pgegypt.org/login` with the bootstrap SUPER_ADMIN.
+- `curl https://pgegypt-api.abdulrahmannader-123.workers.dev/v1/health` → `{"success":true,"status":"ok"}`
+- Login at `https://pgegypt-admin-web.abdulrahmannader-123.workers.dev/login` with the bootstrap SUPER_ADMIN.
 - `POST /v1/publish` from admin → verify `apps/public-web/content/*.json` snapshot in R2
   (`content-snapshots/pgegypt-2026/latest/`) and the public site rebuild.
-- Register via `https://2026day.pgegypt.org/register` → confirmation email via Resend.
+- Register via `https://pgegypt-public-web.abdulrahmannader-123.workers.dev/register` → confirmation email via Resend.
 - Check-in a confirmed registration via admin `/checkin`.
 
 ## 9. Rollback

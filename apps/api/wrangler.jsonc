@@ -6,8 +6,8 @@
   "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
   "vars": {
     "RUNTIME": "production",
-    "API_BASE_URL": "https://api.pgegypt.org",
-    "SITE_URL": "https://2026day.pgegypt.org",
+    "API_BASE_URL": "https://pgegypt-api.abdulrahmannader-123.workers.dev",
+    "SITE_URL": "https://pgegypt-public-web.abdulrahmannader-123.workers.dev",
     "EMAIL_FROM": "PG Day Egypt <noreply@pgegypt.org>",
     "GITHUB_REPO": "AbdulrahmanXSO25/pgday2026"
   },

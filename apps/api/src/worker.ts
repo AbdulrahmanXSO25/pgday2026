@@ -64,7 +64,9 @@ export default {
     const mailer = createMailerFromEnv(env as unknown as Record<string, string>);
     await handleEmailBatch(batch.messages as Array<{ body: unknown; id?: string }>, {
       mailer,
-      siteUrl: (env as unknown as Record<string, string>).SITE_URL ?? "https://2026day.pgegypt.org",
+      siteUrl:
+        (env as unknown as Record<string, string>).SITE_URL ??
+        "https://pgegypt-public-web.abdulrahmannader-123.workers.dev",
     });
     void _ctx;
   },
