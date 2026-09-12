@@ -1,34 +1,31 @@
-import type { Metadata } from "next";
-import { notFound } from "next/navigation";
-import { getSpeaker, getSpeakerSessions, speakers } from "@/lib/content";
+"use client";
+
+import { Suspense } from "react";
+import { useSearchParams } from "next/navigation";
+import { getSpeaker, getSpeakerSessions } from "@/lib/content";
 import { PageHero } from "@/components/ui/page-hero";
 import { Section } from "@/components/ui/section";
 
-export const dynamic = "force-static";
+/**
+ * Speaker detail — query-param page (/speakers/detail?id=...).
+ * Static export cannot have dynamic [slug] routes with zero params (empty
+ * generateStaticParams is a build error), and the published snapshot may
+ * legitimately contain zero speakers. Query-param routing handles both.
+ */
 
-export async function generateMetadata({
-  params,
-}: {
-  params: Promise<{ slug: string }>;
-}): Promise<Metadata> {
-  const { slug } = await params;
-  const speaker = getSpeaker(slug);
-  if (!speaker) return { title: "Speaker" };
-  return {
-    title: speaker.name,
-    description: `${speaker.name} — ${speaker.role}${speaker.company ? ` at ${speaker.company}` : ""}, speaking at PG Day Egypt 2026.`,
-  };
-}
+function SpeakerDetailInner() {
+  const searchParams = useSearchParams();
+  const id = searchParams.get("id") ?? "";
+  const speaker = getSpeaker(id);
 
-export function generateStaticParams() {
-  // Real speaker ids from the content snapshot — every speaker gets a static page
-  return speakers.map((s) => ({ slug: s.id }));
-}
+  if (!speaker) {
+    return (
+      <Section>
+        <p className="text-ink-muted">Speaker not found.</p>
+      </Section>
+    );
+  }
 
-export default async function SpeakerPage({ params }: { params: Promise<{ slug: string }> }) {
-  const { slug } = await params;
-  const speaker = getSpeaker(slug);
-  if (!speaker) return notFound();
   const sessions = getSpeakerSessions(speaker.id);
 
   return (
@@ -57,5 +54,13 @@ export default async function SpeakerPage({ params }: { params: Promise<{ slug: 
         )}
       </Section>
     </>
+  );
+}
+
+export default function SpeakerDetailPage() {
+  return (
+    <Suspense fallback={<div className="text-ink-muted p-8 text-sm">Loading…</div>}>
+      <SpeakerDetailInner />
+    </Suspense>
   );
 }
