@@ -1,8 +1,0 @@
-:HL["/_next/static/chunks/03_j29kksuyws.css","style"]
-:HL["/_next/static/media/051742360c26797e-s.p.1bkzbscqrt8rl.woff2","font",{"crossOrigin":"","type":"font/woff2"}]
-:HL["/_next/static/media/83afe278b6a6bb3c-s.p.2bn3s6zvc0dyp.woff2","font",{"crossOrigin":"","type":"font/woff2"}]
-:HL["/images/speakers/karim-el-sayed.svg","image"]
-:HL["/images/speakers/nourhan-adel.svg","image"]
-:HL["/images/speakers/ahmed-farouk.svg","image"]
-:HL["/images/speakers/mariam-hassan.svg","image"]
-0:{"tree":{"name":"","param":null,"prefetchHints":4112,"slots":{"children":{"name":"__PAGE__","param":null,"prefetchHints":4224,"slots":null}}},"staleTime":300,"buildId":"LTD8t8SY-YZagemDINqIt"}

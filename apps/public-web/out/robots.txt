@@ -1,5 +1,0 @@
-User-Agent: *
-Allow: /
-Disallow: /api/
-
-Sitemap: https://pgegypt-public-web.abdulrahmannader-123.workers.dev/sitemap.xml
