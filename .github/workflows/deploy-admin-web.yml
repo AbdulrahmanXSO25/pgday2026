@@ -1,4 +1,5 @@
-# §33.5 — deploy admin-web. Staging auto, production behind approval. No DB of its own.
+# §33.5 — deploy admin-web. Gated by the `production` GitHub Environment.
+# API_BASE_URL is required at build time (next.config.ts rewrite target).
 name: deploy-admin-web
 
 on:
@@ -11,32 +12,7 @@ on:
       - "packages/types/**"
 
 jobs:
-  deploy-staging:
-    environment: staging
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 9.12.3
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: pnpm
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm turbo run build --filter=@pgegypt/admin-web
-      - name: OpenNext build
-        working-directory: apps/admin-web
-        run: pnpm exec opennextjs-cloudflare build
-      - name: Deploy staging
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          workingDirectory: apps/admin-web
-          command: deploy --env staging
-
   deploy-production:
-    needs: deploy-staging
     environment: production
     runs-on: ubuntu-latest
     steps:
@@ -52,10 +28,13 @@ jobs:
       - run: pnpm turbo run build --filter=@pgegypt/admin-web
       - name: OpenNext build
         working-directory: apps/admin-web
+        env:
+          API_BASE_URL: https://api.pgegypt.org
+          NEXT_PUBLIC_SITE_URL: https://admin.pgegypt.org
         run: pnpm exec opennextjs-cloudflare build
       - name: Deploy production
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           workingDirectory: apps/admin-web
-          command: deploy --env production
+          command: deploy

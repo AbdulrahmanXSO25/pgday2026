@@ -9,8 +9,8 @@ import { getDb, requireDb } from "../lib/db.js";
 import { ApiError } from "../middleware/errorHandler.js";
 import * as registrationService from "../services/registration.service.js";
 import { getClientIpFromHeaders } from "../repositories/registration.repo.js";
-import { createInMemoryQueue } from "@pgegypt/queue";
-import { createMaildevMailer } from "@pgegypt/mail";
+import { createLocalEmailPipeline } from "../jobs/emailConsumer.js";
+import { resolveEmailQueue } from "../lib/queue.js";
 
 /**
  * Registrations routes — §18, §26, §34
@@ -21,22 +21,7 @@ import { createMaildevMailer } from "@pgegypt/mail";
  */
 
 // Shared in-process queue/mailer for local — best-effort, never fail registration
-const localQueue = createInMemoryQueue<unknown>();
-const localMailer = createMaildevMailer();
-
-// Setup local queue handler — delivers via Maildev SMTP (:1025, UI :1080) in dev.
-// In prod the Worker's queue() consumer sends via Resend (§25).
-try {
-  localQueue.process(async (msg) => {
-    const payload = (msg as { payload?: Record<string, unknown> }).payload;
-    if (payload) {
-      const res = await localMailer.send(payload as never);
-      if (!res.ok) console.error("[registrations] local email failed (non-fatal):", res.error);
-    }
-  });
-} catch {
-  // ignore double-register
-}
+const { queue: localQueue, mailer: localMailer } = createLocalEmailPipeline();
 
 function getClientIp(c: { req: { header(n: string): string | undefined } }): string {
   return getClientIpFromHeaders({
@@ -58,7 +43,11 @@ export function registrationRoutes() {
     const ip = getClientIp(c as { req: { header(n: string): string | undefined } });
 
     const result = await registrationService.createRegistration(
-      { db, queue: localQueue as never, mailer: localMailer as never },
+      {
+        db,
+        queue: (resolveEmailQueue(c.env as never) ?? localQueue) as never,
+        mailer: localMailer as never,
+      },
       payload,
       ip
     );

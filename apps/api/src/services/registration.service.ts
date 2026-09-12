@@ -129,13 +129,25 @@ export async function createRegistration(
   // Fire-and-forget: do not await rejection
   void (async () => {
     try {
-      const subject = "You're registered for PG Day Egypt 2026";
-      const html = `<p>Hi ${escapeHtml(name)}, thanks for registering for PG Day Egypt 2026.</p>`;
-      const text = `Hi ${name}, thanks for registering for PG Day Egypt 2026.`;
+      const job = {
+        type: "registration_thank_you" as const,
+        to: email,
+        name,
+        eventId,
+      };
       if (queue && typeof queue.enqueue === "function") {
-        await queue.enqueue({ to: email, subject, html, text, type: "registration_thank_you" });
+        await queue.enqueue(job);
       } else if (mailer && typeof mailer.send === "function") {
-        const res = await mailer.send({ to: email, subject, html, text });
+        // Direct-mailer fallback (no queue) — build the template inline
+        const { buildRegistrationReceivedEmail } = await import("@pgegypt/mail");
+        const siteUrl = process.env.SITE_URL ?? "https://2026day.pgegypt.org";
+        const tpl = buildRegistrationReceivedEmail({ name, siteUrl });
+        const res = await mailer.send({
+          to: email,
+          subject: tpl.subject,
+          html: tpl.html,
+          text: tpl.text,
+        });
         if (!res.ok)
           console.error("[registrations] thank-you email failed (non-fatal):", res.error);
       } else {
@@ -185,13 +197,4 @@ export async function listRegistrations(
 
   // Strip internal columns? Return as-is but ensure soft-delete not exposed via row selection already filtered
   return rows as unknown as Array<Record<string, unknown>>;
-}
-
-function escapeHtml(value: string): string {
-  return value
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
 }

@@ -1,18 +1,19 @@
-# §33.1 — manual workflow_dispatch: apply pending migrations to staging D1
-name: db-migrate-staging
+# §33.1 — manual workflow_dispatch: apply pending migrations to the production D1 database.
+# (Deploys also apply migrations automatically; this is for manual/emergency runs.)
+name: db-migrate
 
 on:
   workflow_dispatch:
 
 jobs:
   migrate:
-    environment: staging
+    environment: production
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Apply migrations to staging
+      - name: Apply migrations to production
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           workingDirectory: apps/api
-          command: d1 migrations apply pgegypt-db-staging --remote
+          command: d1 migrations apply pgegypt-db --remote

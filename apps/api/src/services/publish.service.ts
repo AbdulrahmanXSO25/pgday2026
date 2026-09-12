@@ -116,6 +116,10 @@ export async function publishContent(options: PublishOptions): Promise<PublishRe
   // We check but don't fail if missing — assemble will produce fallback site-config
   const eventRows = await selectAll(db.select().from(events).where(isNull(events.deletedAt)));
   const eventExists = (eventRows as Array<{ id: string }>).some((e) => e.id === eventId);
+  const eventSlug =
+    (eventRows as Array<{ id: string; slug?: string }>)
+      .find((e) => e.id === eventId)
+      ?.slug?.trim() || "pgegypt-2026";
   // If no events at all, we still allow publish (fallback site-config)
   // But if requestedEventId explicit and not found, 404
   if (
@@ -171,7 +175,7 @@ export async function publishContent(options: PublishOptions): Promise<PublishRe
   const last = recentRows[0];
   if (last && last.contentHash === contentHash && last.status === "published") {
     // Still write files to ensure publish dir is populated (idempotent overwrite)
-    const writeRes = await resolvedTarget.publish(files);
+    const writeRes = await resolvedTarget.publish(files, { eventSlug });
     if (!writeRes.ok) {
       throw new ApiError(500, "INTERNAL_ERROR", writeRes.error ?? "Publish target failed");
     }
@@ -187,7 +191,7 @@ export async function publishContent(options: PublishOptions): Promise<PublishRe
   }
 
   // 5) Write via target
-  const writeResult = await resolvedTarget.publish(files);
+  const writeResult = await resolvedTarget.publish(files, { eventSlug });
   if (!writeResult.ok) {
     const failId = crypto.randomUUID();
     try {

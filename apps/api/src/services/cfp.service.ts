@@ -128,21 +128,31 @@ export async function createCfpSubmission(
   // §19.1 — best-effort "submission received" email (never fails the request, §18.5 principle)
   void (async () => {
     try {
-      const subject = `We received your talk proposal: ${normalized.title}`;
-      const html = `<p>Hi ${normalized.submitterName},</p><p>Thanks for submitting <strong>${normalized.title}</strong> to PG Day Egypt 2026. Our program committee will review it and get back to you at this address.</p>`;
-      const text = `Thanks for submitting "${normalized.title}" to PG Day Egypt 2026. Our program committee will review it and get back to you.`;
       const job = {
+        type: "cfp_status" as const,
+        status: "submitted" as const,
         to: normalized.submitterEmail,
-        subject,
-        html,
-        text,
-        type: "cfp_submission_received",
+        name: normalized.submitterName,
+        title: normalized.title,
         idempotencyKey: `cfp-received:${id}`,
       };
       if (options.queue && typeof options.queue.enqueue === "function") {
         await options.queue.enqueue(job);
       } else if (options.mailer && typeof options.mailer.send === "function") {
-        const res = await options.mailer.send(job);
+        // Direct-mailer fallback (no queue) — build the template inline
+        const { buildCfpReceivedEmail } = await import("@pgegypt/mail");
+        const siteUrl = process.env.SITE_URL ?? "https://2026day.pgegypt.org";
+        const tpl = buildCfpReceivedEmail({
+          name: normalized.submitterName,
+          title: normalized.title,
+          siteUrl,
+        });
+        const res = await options.mailer.send({
+          to: normalized.submitterEmail,
+          subject: tpl.subject,
+          html: tpl.html,
+          text: tpl.text,
+        });
         if (!res.ok)
           console.error("[cfp] submission-received email failed (non-fatal):", res.error);
       }

@@ -33,6 +33,15 @@ export type RegistrationEmailJob = {
   requestId?: string;
 };
 
+export type RegistrationStatusEmailJob = {
+  type: "registration_acceptance" | "registration_rejection" | "registration_waitlist";
+  to: string;
+  name: string;
+  eventId?: string;
+  idempotencyKey?: string;
+  requestId?: string;
+};
+
 export type CfpStatus = "submitted" | "under_review" | "accepted" | "rejected" | "needs_revision";
 
 export type CfpEmailJob = {
@@ -46,15 +55,45 @@ export type CfpEmailJob = {
   requestId?: string;
 };
 
-export type EmailJob = RegistrationEmailJob | CfpEmailJob;
+/** Session details attached to the CFP approval email — filled once the talk is scheduled. */
+export type CfpSessionDetails = {
+  date?: string;
+  time?: string;
+  room?: string;
+  track?: string;
+  level?: string;
+  duration?: string;
+  talkType?: string;
+};
+
+export type CfpApprovalEmailJob = {
+  type: "cfp_approval";
+  to: string;
+  name: string;
+  title: string;
+  session: CfpSessionDetails;
+  idempotencyKey?: string;
+  requestId?: string;
+};
+
+export type EmailJob =
+  RegistrationEmailJob | RegistrationStatusEmailJob | CfpEmailJob | CfpApprovalEmailJob;
 
 // Helper to build idempotency key if not provided — pure, deterministic
 export function buildEmailIdempotencyKey(job: EmailJob): string {
   if (job.idempotencyKey) return job.idempotencyKey;
-  if (job.type === "registration_thank_you") {
-    return `reg:${normalizeEmail(job.to)}:${job.eventId ?? "default"}`;
+  switch (job.type) {
+    case "registration_thank_you":
+      return `reg:${normalizeEmail(job.to)}:${job.eventId ?? "default"}`;
+    case "registration_acceptance":
+    case "registration_rejection":
+    case "registration_waitlist":
+      return `reg-status:${normalizeEmail(job.to)}:${job.eventId ?? "default"}:${job.type}`;
+    case "cfp_approval":
+      return `cfp-approval:${normalizeEmail(job.to)}:${job.title}`;
+    case "cfp_status":
+      return `cfp:${normalizeEmail(job.to)}:${job.title}:${job.status}`;
   }
-  return `cfp:${normalizeEmail(job.to)}:${job.title}:${job.status}`;
 }
 
 function normalizeEmail(email: string): string {

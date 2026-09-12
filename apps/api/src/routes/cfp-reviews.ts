@@ -9,10 +9,11 @@ import { ApiError } from "../middleware/errorHandler.js";
 import * as cfpReviewService from "../services/cfp-review.service.js";
 import * as promotionService from "../services/promotion.service.js";
 import type { AuthUser } from "../middleware/auth.js";
-import { createMaildevMailer } from "@pgegypt/mail";
+import { createLocalEmailPipeline } from "../jobs/emailConsumer.js";
+import { resolveEmailQueue } from "../lib/queue.js";
 
-// Best-effort local mailer for CFP decision emails (§19.3) — never fails the request
-const decisionMailer = createMaildevMailer();
+// Best-effort local email pipeline for CFP decision emails (§19.3) — never fails the request
+const { queue: decisionQueue, mailer: decisionMailer } = createLocalEmailPipeline();
 
 /** Drizzle-agnostic select helper (better-sqlite3 sync vs D1 async). */
 async function selectAll(query: unknown): Promise<unknown[]> {
@@ -172,9 +173,12 @@ export function cfpReviewRoutes() {
       userAgent: ua,
     });
 
-    // §19.3 — best-effort decision email to the primary speaker (accepted/rejected)
+    // §19.3 — best-effort decision email to the primary speaker.
+    // Accepted → NO email here: the approval email with session details is sent
+    // when the promoted session is scheduled (§22.2 slot assignment).
+    // Rejected → courteous rejection email.
     const target = body.status as string;
-    if (target === "accepted" || target === "rejected") {
+    if (target === "rejected") {
       void (async () => {
         try {
           const { cfpSubmissions, cfpSubmissionSpeakers } = await import("@pgegypt/db");
@@ -198,16 +202,30 @@ export function cfpReviewRoutes() {
           const name = speakers[0]?.name ?? "there";
           const title = sub[0]?.title ?? "your proposal";
           if (email) {
-            const subject =
-              target === "accepted"
-                ? `Your talk was accepted: ${title}`
-                : `Update on your PG Day Egypt proposal`;
-            const html =
-              target === "accepted"
-                ? `<p>Hi ${name},</p><p>Great news — <strong>${title}</strong> has been accepted for PG Day Egypt 2026. We'll follow up with scheduling details.</p>`
-                : `<p>Hi ${name},</p><p>Thanks for submitting <strong>${title}</strong> to PG Day Egypt 2026. Unfortunately we can't include it in this year's program. We'd love to see you submit again next year.</p>`;
-            const res = await decisionMailer.send({ to: email, subject, html, text: subject });
-            if (!res.ok) console.error("[cfp] decision email failed (non-fatal):", res.error);
+            const job = {
+              type: "cfp_status" as const,
+              status: "rejected" as const,
+              to: email,
+              name,
+              title,
+              idempotencyKey: `cfp:${email.toLowerCase()}:${title}:rejected`,
+            };
+            const activeQueue = resolveEmailQueue(c.env as never) ?? decisionQueue;
+            if (activeQueue && typeof activeQueue.enqueue === "function") {
+              await activeQueue.enqueue(job);
+            } else if (decisionMailer && typeof decisionMailer.send === "function") {
+              // Direct-mailer fallback — build the template inline
+              const { buildCfpRejectedEmail } = await import("@pgegypt/mail");
+              const siteUrl = process.env.SITE_URL ?? "https://2026day.pgegypt.org";
+              const tpl = buildCfpRejectedEmail({ name, title, siteUrl });
+              const res = await decisionMailer.send({
+                to: email,
+                subject: tpl.subject,
+                html: tpl.html,
+                text: tpl.text,
+              });
+              if (!res.ok) console.error("[cfp] decision email failed (non-fatal):", res.error);
+            }
           }
         } catch (err) {
           console.error(

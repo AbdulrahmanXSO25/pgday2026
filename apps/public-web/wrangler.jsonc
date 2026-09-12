@@ -3,7 +3,7 @@
   "name": "pgegypt-public-web",
   "main": ".open-next/worker.js",
   "compatibility_date": "2026-08-01",
-  "compatibility_flags": ["nodejs_compat"],
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
   "assets": {
     "directory": ".open-next/assets",
     "binding": "ASSETS"
@@ -14,13 +14,19 @@
       "service": "pgegypt-public-web"
     }
   ],
+  "r2_buckets": [
+    {
+      "binding": "NEXT_INC_CACHE_R2_BUCKET",
+      "bucket_name": "pgegypt-public-web-opennext-cache"
+    }
+  ],
   "images": {
     "binding": "IMAGES"
   },
   "vars": {
-    "NEXT_PUBLIC_SITE_URL": "https://pgday.eg",
+    "NEXT_PUBLIC_SITE_URL": "https://2026day.pgegypt.org",
     "NEXT_PUBLIC_API_BASE_URL": "https://api.pgegypt.org",
-    "SITE_URL": "https://pgday.eg"
+    "SITE_URL": "https://2026day.pgegypt.org"
   },
   "observability": { "enabled": true },
   "upload_source_maps": true

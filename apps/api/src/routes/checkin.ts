@@ -8,13 +8,14 @@ import { requirePermission } from "../middleware/requirePermission.js";
 import { requireDb } from "../lib/db.js";
 import * as checkinService from "../services/checkin.service.js";
 import { createAuditLog } from "../services/audit.service.js";
-import { createMaildevMailer } from "@pgegypt/mail";
+import { createLocalEmailPipeline } from "../jobs/emailConsumer.js";
+import { resolveEmailQueue, type EmailQueue } from "../lib/queue.js";
 import { hasPermission } from "@pgegypt/auth";
 import type { AuthUser } from "../middleware/auth.js";
 import { ApiError } from "../middleware/errorHandler.js";
 
-// Best-effort local mailer — status-change emails must never fail the request (§18.5)
-const statusMailer = createMaildevMailer();
+// Best-effort local email pipeline — status-change emails must never fail the request (§18.5)
+const { queue: statusQueue, mailer: statusMailer } = createLocalEmailPipeline();
 
 // ---------------------------------------------------------------------------
 // Schemas — Zod at boundaries
@@ -64,6 +65,56 @@ async function selectAllRows(query: unknown): Promise<unknown[]> {
 }
 
 /**
+ * Best-effort acceptance email when a registration transitions to confirmed.
+ * Idempotent via key — re-confirming an already-confirmed registration does not re-send.
+ */
+async function sendAcceptanceEmail(
+  db: import("@pgegypt/db").Db,
+  id: string,
+  queue: EmailQueue | null
+): Promise<void> {
+  void (async () => {
+    try {
+      const { registrations } = await import("@pgegypt/db");
+      const { eq } = await import("drizzle-orm");
+      const rows = (await selectAllRows(
+        db.select().from(registrations).where(eq(registrations.id, id))
+      )) as Array<{ email?: string; name?: string; eventId?: string }>;
+      const reg = rows[0];
+      if (!reg?.email) return;
+      const job = {
+        type: "registration_acceptance" as const,
+        to: reg.email,
+        name: reg.name ?? "there",
+        eventId: reg.eventId,
+        idempotencyKey: `reg-status:${reg.email.toLowerCase()}:${reg.eventId ?? "default"}:acceptance`,
+      };
+      const activeQueue = queue ?? statusQueue;
+      if (activeQueue && typeof activeQueue.enqueue === "function") {
+        await statusQueue.enqueue(job);
+      } else if (statusMailer && typeof statusMailer.send === "function") {
+        const { buildRegistrationAcceptedEmail } = await import("@pgegypt/mail");
+        const siteUrl = process.env.SITE_URL ?? "https://2026day.pgegypt.org";
+        const tpl = buildRegistrationAcceptedEmail({ name: reg.name ?? "there", siteUrl });
+        const res = await statusMailer.send({
+          to: reg.email,
+          subject: tpl.subject,
+          html: tpl.html,
+          text: tpl.text,
+        });
+        if (!res.ok)
+          console.error("[registrations] acceptance email failed (non-fatal):", res.error);
+      }
+    } catch (err) {
+      console.error(
+        "[registrations] acceptance email failed (non-fatal):",
+        err instanceof Error ? err.message : String(err)
+      );
+    }
+  })();
+}
+
+/**
  * §18.4 — manual registration status change (pending/waitlisted/declined):
  * updates status, writes an audit_logs row, and sends a best-effort email.
  */
@@ -71,7 +122,8 @@ async function applyRegistrationStatusChange(
   db: import("@pgegypt/db").Db,
   id: string,
   status: string,
-  meta: { ip: string; userAgent: string; actorId?: string }
+  meta: { ip: string; userAgent: string; actorId?: string },
+  queue: EmailQueue | null
 ): Promise<void> {
   const { registrations } = await import("@pgegypt/db");
   const { eq } = await import("drizzle-orm");
@@ -95,21 +147,59 @@ async function applyRegistrationStatusChange(
       )) as Array<{
         email?: string;
         name?: string;
+        eventId?: string;
       }>;
       const reg = rows[0];
       if (reg?.email) {
-        const subject =
-          status === "declined"
-            ? "Your PG Day Egypt registration"
-            : "PG Day Egypt registration update";
-        const html = `<p>Hi ${reg.name ?? "there"}, your registration status is now <strong>${status}</strong>.</p>`;
-        const res = await statusMailer.send({
-          to: reg.email,
-          subject,
-          html,
-          text: `Your registration status is now ${status}.`,
-        });
-        if (!res.ok) console.error("[registrations] status email failed (non-fatal):", res.error);
+        const job =
+          status === "confirmed"
+            ? {
+                type: "registration_acceptance" as const,
+                to: reg.email,
+                name: reg.name ?? "there",
+                eventId: reg.eventId,
+                idempotencyKey: `reg-status:${reg.email.toLowerCase()}:${reg.eventId ?? "default"}:acceptance`,
+              }
+            : status === "declined"
+              ? {
+                  type: "registration_rejection" as const,
+                  to: reg.email,
+                  name: reg.name ?? "there",
+                  eventId: reg.eventId,
+                  idempotencyKey: `reg-status:${reg.email.toLowerCase()}:${reg.eventId ?? "default"}:rejection`,
+                }
+              : {
+                  type: "registration_waitlist" as const,
+                  to: reg.email,
+                  name: reg.name ?? "there",
+                  eventId: reg.eventId,
+                  idempotencyKey: `reg-status:${reg.email.toLowerCase()}:${reg.eventId ?? "default"}:waitlist`,
+                };
+        const activeQueue = queue ?? statusQueue;
+        if (activeQueue && typeof activeQueue.enqueue === "function") {
+          await statusQueue.enqueue(job);
+        } else if (statusMailer && typeof statusMailer.send === "function") {
+          // Direct-mailer fallback — build the template inline
+          const {
+            buildRegistrationAcceptedEmail,
+            buildRegistrationRejectedEmail,
+            buildRegistrationWaitlistEmail,
+          } = await import("@pgegypt/mail");
+          const siteUrl = process.env.SITE_URL ?? "https://2026day.pgegypt.org";
+          const tpl =
+            status === "confirmed"
+              ? buildRegistrationAcceptedEmail({ name: reg.name ?? "there", siteUrl })
+              : status === "declined"
+                ? buildRegistrationRejectedEmail({ name: reg.name ?? "there", siteUrl })
+                : buildRegistrationWaitlistEmail({ name: reg.name ?? "there", siteUrl });
+          const res = await statusMailer.send({
+            to: reg.email,
+            subject: tpl.subject,
+            html: tpl.html,
+            text: tpl.text,
+          });
+          if (!res.ok) console.error("[registrations] status email failed (non-fatal):", res.error);
+        }
       }
     } catch (err) {
       console.error(
@@ -266,6 +356,10 @@ export function checkinRoutes() {
       ip: meta.ip,
       userAgent: meta.userAgent,
     });
+    // Best-effort acceptance email — only when newly confirmed (idempotent re-confirm skips)
+    if (!result.alreadyConfirmed) {
+      await sendAcceptanceEmail(db, id, resolveEmailQueue(c.env as never));
+    }
     return c.json(
       {
         success: true as const,
@@ -313,6 +407,10 @@ export function checkinRoutes() {
           ip: meta.ip,
           userAgent: meta.userAgent,
         });
+        // Best-effort acceptance email — only when newly confirmed
+        if (!result.alreadyConfirmed) {
+          await sendAcceptanceEmail(db, id, resolveEmailQueue(c.env as never));
+        }
         return c.json(
           {
             success: true as const,
@@ -329,7 +427,13 @@ export function checkinRoutes() {
 
       // Non-confirm patch — simple status update (pending/waitlisted/declined)
       if (status && ["pending", "waitlisted", "declined"].includes(status)) {
-        await applyRegistrationStatusChange(db, id, status, meta);
+        await applyRegistrationStatusChange(
+          db,
+          id,
+          status,
+          meta,
+          resolveEmailQueue(c.env as never)
+        );
         return c.json(
           {
             success: true as const,
@@ -370,6 +474,10 @@ export function checkinRoutes() {
           ip: meta.ip,
           userAgent: meta.userAgent,
         });
+        // Best-effort acceptance email — only when newly confirmed
+        if (!result.alreadyConfirmed) {
+          await sendAcceptanceEmail(db, id, resolveEmailQueue(c.env as never));
+        }
         return c.json(
           {
             success: true as const,
@@ -385,7 +493,13 @@ export function checkinRoutes() {
       }
       // §18.4 — manual status changes (pending/waitlisted/declined) are supported on the admin alias too
       if (status && ["pending", "waitlisted", "declined"].includes(status)) {
-        await applyRegistrationStatusChange(db, id, status, meta);
+        await applyRegistrationStatusChange(
+          db,
+          id,
+          status,
+          meta,
+          resolveEmailQueue(c.env as never)
+        );
         return c.json(
           {
             success: true as const,

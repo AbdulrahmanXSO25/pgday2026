@@ -1,5 +1,4 @@
 // Publishing pipeline — explicit publish, not per-write; local vs R2+repository_dispatch.
-// Phases 0-6: local active. R2 stub until Phase 7.
 
 export type {
   PublishTarget,
@@ -15,8 +14,13 @@ export {
   DEFAULT_PUBLISH_DIR,
 } from "./local-target.js";
 export type { LocalTargetOptions } from "./local-target.js";
-export { createR2Target, createPublishTarget } from "./r2-target.stub.js";
-export type { R2TargetOptions } from "./r2-target.stub.js";
+export {
+  createR2Target,
+  createPublishTarget,
+  DEFAULT_EVENT_SLUG,
+  DEFAULT_DISPATCH_EVENT,
+} from "./r2-target.js";
+export type { R2TargetOptions, R2BucketLike } from "./r2-target.js";
 export { assembleContent, validateAssembledFiles } from "./assemble.js";
 export type { AssembleOptions } from "./assemble.js";
 export {

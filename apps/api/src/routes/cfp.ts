@@ -7,8 +7,8 @@ import { ApiError } from "../middleware/errorHandler.js";
 import { CfpSubmissionSchema, CfpMineQuerySchema } from "@pgegypt/validation";
 import * as cfpService from "../services/cfp.service.js";
 import { getCfpClientIpFromHeaders } from "../repositories/cfp.repo.js";
-import { createInMemoryQueue } from "@pgegypt/queue";
-import { createMaildevMailer } from "@pgegypt/mail";
+import { createLocalEmailPipeline } from "../jobs/emailConsumer.js";
+import { resolveEmailQueue } from "../lib/queue.js";
 
 /**
  * CFP routes — §19, §26, §34
@@ -19,19 +19,7 @@ import { createMaildevMailer } from "@pgegypt/mail";
  */
 
 // Best-effort local email transport (in-process queue → Maildev in dev, Resend in prod via worker)
-const localQueue = createInMemoryQueue<unknown>();
-const localMailer = createMaildevMailer();
-try {
-  localQueue.process(async (msg) => {
-    const payload = (msg as { payload?: Record<string, unknown> }).payload;
-    if (payload) {
-      const res = await localMailer.send(payload as never);
-      if (!res.ok) console.error("[cfp] local email failed (non-fatal):", res.error);
-    }
-  });
-} catch {
-  // ignore double-register
-}
+const { queue: localQueue, mailer: localMailer } = createLocalEmailPipeline();
 
 function getClientIp(c: { req: { header(n: string): string | undefined } }): string {
   return getCfpClientIpFromHeaders({
@@ -57,7 +45,11 @@ export function cfpRoutes() {
     void idempotencyKey;
 
     const result = await cfpService.createCfpSubmission(
-      { db, queue: localQueue as never, mailer: localMailer as never },
+      {
+        db,
+        queue: (resolveEmailQueue(c.env as never) ?? localQueue) as never,
+        mailer: localMailer as never,
+      },
       payload,
       ip
     );

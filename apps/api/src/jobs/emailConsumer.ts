@@ -1,6 +1,17 @@
 import type { QueueMessage, EmailJob } from "@pgegypt/queue";
+import { createInMemoryQueue } from "@pgegypt/queue";
 import type { Mailer } from "@pgegypt/mail";
-import { buildThankYouEmail, buildCfpStatusEmail } from "@pgegypt/mail";
+import { createMaildevMailer } from "@pgegypt/mail";
+import {
+  buildRegistrationReceivedEmail,
+  buildRegistrationAcceptedEmail,
+  buildRegistrationRejectedEmail,
+  buildRegistrationWaitlistEmail,
+  buildCfpReceivedEmail,
+  buildCfpApprovalEmail,
+  buildCfpRejectedEmail,
+  buildCfpStatusEmail,
+} from "@pgegypt/mail";
 import { createLogger, redactEmail } from "../lib/logger.js";
 
 /**
@@ -17,8 +28,23 @@ export type EmailConsumerDeps = {
   defaultFrom?: string;
 };
 
+/**
+ * Shared local email pipeline — in-process queue + Maildev mailer wired to the
+ * same consumer used by the production Worker queue. Routes use this so local
+ * dev sends the exact same templated emails as production.
+ */
+export function createLocalEmailPipeline(siteUrl?: string): {
+  queue: ReturnType<typeof createInMemoryQueue<EmailJob>>;
+  mailer: Mailer;
+} {
+  const queue = createInMemoryQueue<EmailJob>();
+  const mailer = createMaildevMailer();
+  queue.process(createEmailConsumer({ mailer, siteUrl }));
+  return { queue, mailer };
+}
+
 export function createEmailConsumer(deps: EmailConsumerDeps) {
-  const siteUrl = deps.siteUrl ?? process.env.SITE_URL ?? "https://pgegypt.org";
+  const siteUrl = deps.siteUrl ?? process.env.SITE_URL ?? "https://2026day.pgegypt.org";
 
   return async (msg: QueueMessage<EmailJob>): Promise<void> => {
     const job = msg.payload;
@@ -69,7 +95,7 @@ export async function handleEmailJob(
 
   // Build payload per job type — pure template calls
   if (job.type === "registration_thank_you") {
-    const tpl = buildThankYouEmail({ name: job.name, siteUrl });
+    const tpl = buildRegistrationReceivedEmail({ name: job.name, siteUrl });
     return mailer.send({
       to: job.to,
       subject: tpl.subject,
@@ -80,7 +106,102 @@ export async function handleEmailJob(
     });
   }
 
+  if (job.type === "registration_acceptance") {
+    const tpl = buildRegistrationAcceptedEmail({ name: job.name, siteUrl });
+    return mailer.send({
+      to: job.to,
+      subject: tpl.subject,
+      html: tpl.html,
+      text: tpl.text,
+      idempotencyKey:
+        job.idempotencyKey ??
+        `reg-status:${job.to.toLowerCase()}:${job.eventId ?? "default"}:acceptance`,
+    });
+  }
+
+  if (job.type === "registration_rejection") {
+    const tpl = buildRegistrationRejectedEmail({ name: job.name, siteUrl });
+    return mailer.send({
+      to: job.to,
+      subject: tpl.subject,
+      html: tpl.html,
+      text: tpl.text,
+      idempotencyKey:
+        job.idempotencyKey ??
+        `reg-status:${job.to.toLowerCase()}:${job.eventId ?? "default"}:rejection`,
+    });
+  }
+
+  if (job.type === "registration_waitlist") {
+    const tpl = buildRegistrationWaitlistEmail({ name: job.name, siteUrl });
+    return mailer.send({
+      to: job.to,
+      subject: tpl.subject,
+      html: tpl.html,
+      text: tpl.text,
+      idempotencyKey:
+        job.idempotencyKey ??
+        `reg-status:${job.to.toLowerCase()}:${job.eventId ?? "default"}:waitlist`,
+    });
+  }
+
+  if (job.type === "cfp_approval") {
+    const tpl = buildCfpApprovalEmail({
+      name: job.name,
+      title: job.title,
+      siteUrl,
+      session: job.session,
+    });
+    return mailer.send({
+      to: job.to,
+      subject: tpl.subject,
+      html: tpl.html,
+      text: tpl.text,
+      idempotencyKey: job.idempotencyKey ?? `cfp-approval:${job.to.toLowerCase()}:${job.title}`,
+    });
+  }
+
   if (job.type === "cfp_status") {
+    // submitted → dedicated received template; accepted → approval template;
+    // rejected → dedicated rejection template; others → generic status template
+    if (job.status === "submitted") {
+      const tpl = buildCfpReceivedEmail({ name: job.name, title: job.title, siteUrl });
+      return mailer.send({
+        to: job.to,
+        subject: tpl.subject,
+        html: tpl.html,
+        text: tpl.text,
+        idempotencyKey:
+          job.idempotencyKey ?? `cfp:${job.to.toLowerCase()}:${job.title}:${job.status}`,
+      });
+    }
+    if (job.status === "accepted") {
+      const tpl = buildCfpApprovalEmail({ name: job.name, title: job.title, siteUrl });
+      return mailer.send({
+        to: job.to,
+        subject: tpl.subject,
+        html: tpl.html,
+        text: tpl.text,
+        idempotencyKey:
+          job.idempotencyKey ?? `cfp:${job.to.toLowerCase()}:${job.title}:${job.status}`,
+      });
+    }
+    if (job.status === "rejected") {
+      const tpl = buildCfpRejectedEmail({
+        name: job.name,
+        title: job.title,
+        siteUrl,
+        feedback: job.feedback,
+      });
+      return mailer.send({
+        to: job.to,
+        subject: tpl.subject,
+        html: tpl.html,
+        text: tpl.text,
+        idempotencyKey:
+          job.idempotencyKey ?? `cfp:${job.to.toLowerCase()}:${job.title}:${job.status}`,
+      });
+    }
     const tpl = buildCfpStatusEmail({
       name: job.name,
       title: job.title,
