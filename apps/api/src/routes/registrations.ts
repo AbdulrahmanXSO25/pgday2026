@@ -72,11 +72,11 @@ export function registrationRoutes() {
     async (c: Context<AppEnv>) => {
       const db = requireDb(c as Context<AppEnv>);
       const query = c.req.query() as unknown as Record<string, string>;
-      const data = await registrationService.listRegistrations(db, query);
+      const { rows, total } = await registrationService.listRegistrations(db, query);
       return c.json({
         success: true as const,
-        data,
-        meta: { count: data.length },
+        data: rows,
+        meta: { count: rows.length, total },
         requestId: c.get("requestId" as never) as string | undefined,
       });
     }
@@ -90,11 +90,67 @@ export function registrationRoutes() {
     async (c: Context<AppEnv>) => {
       const db = requireDb(c as Context<AppEnv>);
       const query = c.req.query() as unknown as Record<string, string>;
-      const data = await registrationService.listRegistrations(db, query);
+      const { rows, total } = await registrationService.listRegistrations(db, query);
       return c.json({
         success: true as const,
-        data,
-        meta: { count: data.length },
+        data: rows,
+        meta: { count: rows.length, total },
+        requestId: c.get("requestId" as never) as string | undefined,
+      });
+    }
+  );
+
+  // §26.3 — bulk status change (registrations:WRITE). Accept/waitlist/reject many at once.
+  r.post(
+    "/v1/admin/registrations/bulk",
+    requireAuth(),
+    requirePermission("registrations:WRITE" as never),
+    async (c: Context<AppEnv>) => {
+      const db = requireDb(c as Context<AppEnv>);
+      const body = (await c.req.json().catch(() => ({}))) as {
+        ids?: unknown;
+        status?: unknown;
+      };
+      const ids = Array.isArray(body.ids)
+        ? (body.ids as unknown[]).filter((x): x is string => typeof x === "string" && x.length > 0)
+        : [];
+      const status = String(body.status ?? "")
+        .trim()
+        .toLowerCase();
+      if (ids.length === 0) {
+        throw new ApiError(422, "VALIDATION_ERROR", "ids must be a non-empty array");
+      }
+      if (!["confirmed", "waitlisted", "declined"].includes(status)) {
+        throw new ApiError(
+          422,
+          "VALIDATION_ERROR",
+          "status must be one of confirmed, waitlisted, declined"
+        );
+      }
+      const { applyRegistrationStatusChange } = await import("./checkin.js");
+      const meta = {
+        ip: c.req.header("cf-connecting-ip") ?? "unknown",
+        userAgent: c.req.header("user-agent") ?? "unknown",
+        actorId: (c.get("user" as never) as { id?: string } | undefined)?.id,
+      };
+      let updated = 0;
+      for (const id of ids) {
+        try {
+          await applyRegistrationStatusChange(
+            db,
+            id,
+            status,
+            meta,
+            resolveEmailQueue(c.env as never)
+          );
+          updated++;
+        } catch {
+          // skip invalid/missing ids — report count
+        }
+      }
+      return c.json({
+        success: true as const,
+        data: { updated, requested: ids.length, status },
         requestId: c.get("requestId" as never) as string | undefined,
       });
     }
@@ -108,9 +164,12 @@ export function registrationRoutes() {
     async (c: Context<AppEnv>) => {
       const db = requireDb(c as Context<AppEnv>);
       const query = c.req.query() as unknown as Record<string, string>;
-      const rows = (await registrationService.listRegistrations(db, query)) as Array<
-        Record<string, unknown>
-      >;
+      // Export ALL rows (no pagination) so the CSV is a complete review list
+      const { rows } = await registrationService.listRegistrations(db, {
+        ...query,
+        limit: "100000",
+        offset: "0",
+      });
       const columns = [
         "id",
         "name",
@@ -118,6 +177,7 @@ export function registrationRoutes() {
         "organization",
         "role",
         "status",
+        "dietaryNotes",
         "checkedInAt",
         "createdAt",
       ];

@@ -1,4 +1,4 @@
-import { eq, and, isNull, desc } from "drizzle-orm";
+import { eq, and, isNull, desc, sql } from "drizzle-orm";
 import { events, registrations, rateLimits } from "@pgegypt/db";
 import type { Db } from "@pgegypt/db";
 
@@ -197,6 +197,25 @@ export async function listRegistrations(
 
   const rows = await selectAll(baseQuery);
   return rows as Array<typeof registrations.$inferSelect>;
+}
+
+export async function countRegistrations(
+  db: Db,
+  filters: { eventId?: string; status?: string } = {}
+): Promise<number> {
+  const whereClauses: ReturnType<typeof eq>[] = [];
+  if (filters.eventId) whereClauses.push(eq(registrations.eventId, filters.eventId));
+  if (filters.status) whereClauses.push(eq(registrations.status, filters.status as never));
+  const q = db
+    .select({ count: sql<number>`count(*)` })
+    .from(registrations)
+    .where(
+      whereClauses.length > 0
+        ? and(isNull(registrations.deletedAt), ...whereClauses)
+        : isNull(registrations.deletedAt)
+    );
+  const rows = (await selectAll(q)) as Array<{ count: number }>;
+  return Number(rows[0]?.count ?? 0);
 }
 
 /**

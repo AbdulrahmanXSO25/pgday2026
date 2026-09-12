@@ -2,6 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
+import Link from "next/link";
 import { apiFetch, ApiClientError } from "@/lib/api";
 
 /**
@@ -27,14 +28,22 @@ export default function SpeakersPage() {
   const qc = useQueryClient();
   const [form, setForm] = useState({ slug: "", name: "", bio: "", role: "", company: "" });
   const [error, setError] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
+  const [page, setPage] = useState(0);
 
   const speakersQ = useQuery({
-    queryKey: ["admin", "speakers"],
+    queryKey: ["admin", "speakers", search, page],
     queryFn: async () => {
-      const res = await apiFetch<{ success: true; data: ApiSpeaker[] }>("/speakers", {
-        method: "GET",
-      });
-      return res.data;
+      const qs = new URLSearchParams();
+      if (search) qs.set("search", search);
+      qs.set("limit", "50");
+      qs.set("offset", String(page * 50));
+      const res = await apiFetch<{
+        success: true;
+        data: ApiSpeaker[];
+        meta: { count: number; total: number };
+      }>(`/speakers?${qs.toString()}`, { method: "GET" });
+      return res;
     },
     retry: false,
   });
@@ -175,17 +184,29 @@ export default function SpeakersPage() {
       </div>
 
       <div className="mt-6">
+        <div className="mb-3 flex items-center gap-2">
+          <input
+            placeholder="Search speakers…"
+            value={search}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setPage(0);
+            }}
+            className="border-hairline bg-surface w-64 rounded-sm border px-3 py-1.5 text-sm"
+          />
+          <span className="text-ink-muted text-xs">{speakersQ.data?.meta.total ?? 0} speakers</span>
+        </div>
         {speakersQ.isLoading ? (
           <p className="admin-label text-ink-muted text-sm">Loading…</p>
         ) : speakersQ.isError ? (
           <p role="alert" className="text-sm text-red-600">
             {(speakersQ.error as Error).message}
           </p>
-        ) : speakersQ.data?.length === 0 ? (
+        ) : (speakersQ.data?.data ?? []).length === 0 ? (
           <p className="admin-label text-ink-muted text-sm">No speakers yet.</p>
         ) : (
           <ul className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {(speakersQ.data ?? []).map((row) => (
+            {(speakersQ.data?.data ?? []).map((row) => (
               <li key={row.id} className="card p-4">
                 <div className="flex items-start justify-between gap-2">
                   <h3 className="text-base font-bold">{row.name}</h3>
@@ -205,23 +226,52 @@ export default function SpeakersPage() {
                 </p>
                 <div className="mt-3 flex items-center justify-between">
                   <p className="admin-label text-ink-muted text-xs">/{row.slug}</p>
-                  <button
-                    onClick={() =>
-                      togglePublish.mutate({ id: row.id, isDraft: row.isDraft ? 0 : 1 })
-                    }
-                    disabled={togglePublish.isPending}
-                    className={`rounded-sm border px-2.5 py-1 text-xs font-semibold disabled:opacity-50 ${
-                      row.isDraft
-                        ? "border-pg-blue bg-pg-blue hover:bg-pg-blue-dark text-white"
-                        : "border-hairline bg-surface text-ink hover:bg-surfaceRaised"
-                    }`}
-                  >
-                    {row.isDraft ? "Publish" : "Unpublish"}
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <Link
+                      href={`/speakers/edit?id=${row.id}`}
+                      className="border-hairline bg-surface-raised text-ink hover:border-pg-blue rounded-sm border px-2.5 py-1 text-xs font-semibold"
+                    >
+                      Edit
+                    </Link>
+                    <button
+                      onClick={() =>
+                        togglePublish.mutate({ id: row.id, isDraft: row.isDraft ? 0 : 1 })
+                      }
+                      disabled={togglePublish.isPending}
+                      className={`rounded-sm border px-2.5 py-1 text-xs font-semibold disabled:opacity-50 ${
+                        row.isDraft
+                          ? "border-pg-blue bg-pg-blue hover:bg-pg-blue-dark text-white"
+                          : "border-hairline bg-surface text-ink hover:bg-surfaceRaised"
+                      }`}
+                    >
+                      {row.isDraft ? "Publish" : "Unpublish"}
+                    </button>
+                  </div>
                 </div>
               </li>
             ))}
           </ul>
+        )}
+        {(speakersQ.data?.meta.total ?? 0) > 50 && (
+          <div className="mt-4 flex items-center gap-3">
+            <button
+              onClick={() => setPage((p) => Math.max(0, p - 1))}
+              disabled={page === 0}
+              className="border-hairline bg-surface rounded-sm border px-3 py-1.5 text-xs font-medium disabled:opacity-40"
+            >
+              ← Prev
+            </button>
+            <span className="text-ink-muted text-xs">
+              Page {page + 1} of {Math.max(1, Math.ceil((speakersQ.data?.meta.total ?? 0) / 50))}
+            </span>
+            <button
+              onClick={() => setPage((p) => p + 1)}
+              disabled={(page + 1) * 50 >= (speakersQ.data?.meta.total ?? 0)}
+              className="border-hairline bg-surface rounded-sm border px-3 py-1.5 text-xs font-medium disabled:opacity-40"
+            >
+              Next →
+            </button>
+          </div>
         )}
       </div>
     </div>

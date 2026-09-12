@@ -8,6 +8,7 @@ import {
   isUniqueViolation,
   checkRateLimit,
   listRegistrations as repoList,
+  countRegistrations,
 } from "../repositories/registration.repo.js";
 import type { RegistrationPayload } from "@pgegypt/validation";
 
@@ -177,7 +178,7 @@ export async function listRegistrations(
     limit?: string;
     offset?: string;
   } = {}
-): Promise<Array<Record<string, unknown>>> {
+): Promise<{ rows: Array<Record<string, unknown>>; total: number }> {
   const eventId = (query.eventId ?? query.event_id) as string | undefined;
   const status = query.status as string | undefined;
   const limit = query.limit ? Number(query.limit) : undefined;
@@ -195,7 +196,10 @@ export async function listRegistrations(
     limit: Number.isFinite(limit as number) ? (limit as number) : undefined,
     offset: Number.isFinite(offset as number) ? (offset as number) : undefined,
   });
+  const total = await countRegistrations(db, { eventId, status });
 
-  // Strip internal columns? Return as-is but ensure soft-delete not exposed via row selection already filtered
-  return rows as unknown as Array<Record<string, unknown>>;
+  return {
+    rows: rows as unknown as Array<Record<string, unknown>>,
+    total,
+  };
 }

@@ -119,7 +119,7 @@ async function sendAcceptanceEmail(
  * §18.4 — manual registration status change (pending/waitlisted/declined):
  * updates status, writes an audit_logs row, and sends a best-effort email.
  */
-async function applyRegistrationStatusChange(
+export async function applyRegistrationStatusChange(
   db: import("@pgegypt/db").Db,
   id: string,
   status: string,

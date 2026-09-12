@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { eq, and, isNull, desc } from "drizzle-orm";
+import { eq, and, isNull, desc, like, sql } from "drizzle-orm";
 import type { AppEnv } from "../app.js";
 import { validateJson } from "../lib/validate.js";
 import { requireAuth } from "../middleware/auth.js";
@@ -95,7 +95,12 @@ export function speakerRoutes() {
     const eventId = query.eventId ?? query.event_id ?? DEFAULT_EVENT_ID;
     const limit = Math.min(Math.max(Number(query.limit) || 100, 1), 200);
     const offset = Math.max(Number(query.offset) || 0, 0);
-    const where = and(isNull(speakers.deletedAt), eq(speakers.eventId, eventId));
+    const search = (query.search ?? query.q ?? "").trim().toLowerCase();
+    const where = and(
+      isNull(speakers.deletedAt),
+      eq(speakers.eventId, eventId),
+      ...(search ? [like(speakers.name, `%${search}%`)] : [])
+    );
     const rows = (await selectAll(
       db
         .select()
@@ -105,10 +110,16 @@ export function speakerRoutes() {
         .limit(limit)
         .offset(offset)
     )) as Array<typeof speakers.$inferSelect>;
+    const countRows = (await selectAll(
+      db
+        .select({ c: sql<number>`count(*)` })
+        .from(speakers)
+        .where(where)
+    )) as Array<{ c: number }>;
     return c.json({
       success: true as const,
       data: rows,
-      meta: { count: rows.length },
+      meta: { count: rows.length, total: Number(countRows[0]?.c ?? 0) },
       requestId: c.get("requestId" as never) as string | undefined,
     });
   };
