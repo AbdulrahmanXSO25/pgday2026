@@ -300,7 +300,7 @@ export async function assembleContent(
       role: s.role ?? "",
       company: s.company ?? "",
       bio: s.bio,
-      photo: s.photoUrl ?? s.photoKey ?? `/images/speakers/${s.slug}.jpg`,
+      photo: s.photoUrl ?? s.photoKey ?? `/images/speakers/${s.slug}.svg`,
       social: {
         linkedin: s.linkedin ?? null,
         twitter: s.twitter ?? null,

@@ -7,6 +7,7 @@ import { getSession, getSpeaker, schedule } from "@/lib/content";
 import { PageHero } from "@/components/ui/page-hero";
 import { Section } from "@/components/ui/section";
 import { Badge } from "@/components/ui/badge";
+import { formatTimeRange } from "@/lib/dates";
 
 const LEVEL_LABELS: Record<string, string> = {
   beginner: "Beginner",
@@ -37,7 +38,7 @@ function SessionDetailInner() {
       <PageHero
         eyebrow="Session"
         title={session.title}
-        description={`${session.start} – ${session.end} · ${LEVEL_LABELS[session.level ?? ""] ?? "All levels"}`}
+        description={`${formatTimeRange(session.start, session.end)} · ${LEVEL_LABELS[session.level ?? ""] ?? "All levels"}`}
       />
 
       <Section>
@@ -52,7 +53,7 @@ function SessionDetailInner() {
               <Badge variant="neutral">{LEVEL_LABELS[session.level] ?? session.level}</Badge>
             )}
             <span className="text-ink-muted text-sm">
-              {session.start} – {session.end}
+              {formatTimeRange(session.start, session.end)}
             </span>
           </div>
 
