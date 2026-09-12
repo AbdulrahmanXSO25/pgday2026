@@ -392,14 +392,21 @@ describe("PublishTarget interface — local vs R2 stub (§16)", () => {
       );
       expect(res.ok).toBe(true);
       expect(res.writtenFiles).toEqual(["site-config.json", "speakers.json"]);
-      expect(putCalls.map((c) => c.key).sort()).toEqual([
-        "content-snapshots/pgegypt-2026/latest/site-config.json",
-        "content-snapshots/pgegypt-2026/latest/speakers.json",
-      ]);
+      expect(res.snapshotId).toBeTruthy();
+      // Writes to BOTH the snapshotId path and latest/ (copy for convenience)
+      const keys = putCalls.map((c) => c.key).sort();
+      expect(keys).toContain(`content-snapshots/pgegypt-2026/${res.snapshotId}/site-config.json`);
+      expect(keys).toContain(`content-snapshots/pgegypt-2026/${res.snapshotId}/speakers.json`);
+      expect(keys).toContain("content-snapshots/pgegypt-2026/latest/site-config.json");
+      expect(keys).toContain("content-snapshots/pgegypt-2026/latest/speakers.json");
       expect(JSON.parse(putCalls[0].body)).toEqual({ event: { name: "x" } });
       expect(fetchCalls).toHaveLength(1);
       expect(fetchCalls[0].url).toBe("https://api.github.com/repos/owner/repo/dispatches");
-      expect(JSON.parse(fetchCalls[0].init.body as string)).toEqual({ event_type: "publish" });
+      // Dispatch payload carries { slug, snapshotId } so CI fetches the exact snapshot
+      expect(JSON.parse(fetchCalls[0].init.body as string)).toEqual({
+        event_type: "publish",
+        client_payload: { slug: "pgegypt-2026", snapshotId: res.snapshotId },
+      });
       expect((fetchCalls[0].init.headers as Record<string, string>).Authorization).toBe(
         "Bearer tok"
       );

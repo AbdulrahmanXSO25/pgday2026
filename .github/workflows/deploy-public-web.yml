@@ -15,6 +15,10 @@ on:
   repository_dispatch:
     types: [publish]
 
+concurrency:
+  group: publish-${{ github.event.client_payload.slug || 'code-push' }}
+  cancel-in-progress: true
+
 jobs:
   build-and-deploy:
     environment: production
@@ -37,6 +41,7 @@ jobs:
           R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
           R2_ENDPOINT: ${{ secrets.R2_ENDPOINT }}
           R2_BUCKET: pgegypt-media
+          CONTENT_SNAPSHOT_ID: ${{ github.event.client_payload.snapshotId }}
         run: node scripts/fetch-content-snapshot.mjs
       - name: Build static export
         working-directory: apps/public-web
