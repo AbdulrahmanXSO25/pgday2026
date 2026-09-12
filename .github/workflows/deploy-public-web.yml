@@ -1,7 +1,8 @@
-# §33.4 — deploy public-web. Two triggers, same job body:
+# §33.4 — deploy public-web to Cloudflare Pages (static export).
+# Two triggers, same job body:
 # - push to master (code change) → rebuild using committed content/*.json
 # - repository_dispatch (publish) → fetch latest snapshot from R2 first, then build+deploy
-# NEXT_PUBLIC_* vars are inlined at build time — must be set here (wrangler vars are runtime-only).
+# NEXT_PUBLIC_* vars are inlined at build time — must be set here.
 name: deploy-public-web
 
 on:
@@ -37,17 +38,16 @@ jobs:
           R2_ENDPOINT: ${{ secrets.R2_ENDPOINT }}
           R2_BUCKET: pgegypt-media
         run: node scripts/fetch-content-snapshot.mjs
-      - run: pnpm turbo run build --filter=@pgegypt/public-web
-      - name: OpenNext build
+      - name: Build static export
         working-directory: apps/public-web
         env:
           NEXT_PUBLIC_SITE_URL: https://pgegypt-public-web.abdulrahmannader-123.workers.dev
           NEXT_PUBLIC_API_BASE_URL: https://pgegypt-api.abdulrahmannader-123.workers.dev
-        run: pnpm exec opennextjs-cloudflare build
+        run: pnpm exec next build
       - name: noindex guard (§27.5)
-        run: node scripts/assert-no-noindex.mjs apps/public-web/.open-next/assets
-      - name: Deploy
+        run: node scripts/assert-no-noindex.mjs apps/public-web/out
+      - name: Deploy to Pages
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-        run: pnpm exec wrangler deploy
+        run: pnpm exec wrangler pages deploy out --project-name=pgegypt-public-web
         working-directory: apps/public-web
