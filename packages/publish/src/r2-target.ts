@@ -2,10 +2,11 @@
  * R2 + repository_dispatch PublishTarget (§16, production).
  *
  * Writes the assembled content snapshot to R2 at
- *   content-snapshots/{eventSlug}/latest/{site-config,speakers,...}.json
- * (the exact layout scripts/fetch-content-snapshot.mjs reads), then triggers
- * a GitHub `repository_dispatch` (event_type "publish") so CI rebuilds and
- * redeploys public-web.
+ *   content-snapshots/{eventSlug}/{snapshotId}/{site-config,speakers,...}.json
+ * then copies to `latest/` for convenience, and triggers a GitHub
+ * `repository_dispatch` (event_type "publish") with client_payload
+ * { slug, snapshotId } so CI rebuilds and redeploys public-web from the
+ * EXACT snapshot (no "latest" race between two close publishes).
  *
  * Workers-safe: uses the R2_BUCKET binding (.put) and global fetch only —
  * no node:fs, no AWS SDK.
@@ -34,7 +35,11 @@ export type R2TargetOptions = {
 export const DEFAULT_EVENT_SLUG = "pgegypt-2026";
 export const DEFAULT_DISPATCH_EVENT = "publish";
 
-function snapshotKey(slug: string, filename: string): string {
+function snapshotKey(slug: string, snapshotId: string, filename: string): string {
+  return `content-snapshots/${slug}/${snapshotId}/${filename}`;
+}
+
+function latestKey(slug: string, filename: string): string {
   return `content-snapshots/${slug}/latest/${filename}`;
 }
 
@@ -66,10 +71,14 @@ export function createR2Target(options: R2TargetOptions = {}): PublishTarget {
         };
       }
 
+      const contentHash = await hashFiles(files);
+      const snapshotId = contentHash.slice(0, 16);
       const names = Object.keys(files).sort();
       try {
         for (const name of names) {
-          await options.bucket.put(snapshotKey(slug, name), JSON.stringify(files[name], null, 2));
+          const body = JSON.stringify(files[name], null, 2);
+          await options.bucket.put(snapshotKey(slug, snapshotId, name), body);
+          await options.bucket.put(latestKey(slug, name), body);
         }
       } catch (error) {
         return {
@@ -78,8 +87,6 @@ export function createR2Target(options: R2TargetOptions = {}): PublishTarget {
           error: `R2 snapshot upload failed: ${error instanceof Error ? error.message : String(error)}`,
         };
       }
-
-      const contentHash = await hashFiles(files);
 
       let dispatchRes: Response;
       try {
@@ -92,7 +99,10 @@ export function createR2Target(options: R2TargetOptions = {}): PublishTarget {
             "Content-Type": "application/json",
             "User-Agent": "pgegypt-publish-worker",
           },
-          body: JSON.stringify({ event_type: dispatchEvent }),
+          body: JSON.stringify({
+            event_type: dispatchEvent,
+            client_payload: { slug, snapshotId },
+          }),
         });
       } catch (error) {
         return {
@@ -115,7 +125,7 @@ export function createR2Target(options: R2TargetOptions = {}): PublishTarget {
         };
       }
 
-      return { ok: true, target: "r2", contentHash, writtenFiles: names };
+      return { ok: true, target: "r2", contentHash, snapshotId, writtenFiles: names };
     },
 
     async healthCheck(): Promise<{ ok: boolean; message?: string }> {

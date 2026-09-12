@@ -13,6 +13,9 @@ const endpoint = process.env.R2_ENDPOINT;
 const accessKeyId = process.env.R2_ACCESS_KEY_ID;
 const secretAccessKey = process.env.R2_SECRET_ACCESS_KEY;
 const eventSlug = process.env.CONTENT_EVENT_SLUG ?? "pgegypt-2026";
+// Exact snapshot id from the repository_dispatch client_payload — avoids the
+// "latest" race between two close publishes. Falls back to latest/.
+const snapshotId = process.env.CONTENT_SNAPSHOT_ID?.trim();
 const destDir = process.argv[2] ?? "apps/public-web/content";
 
 if (!endpoint || !accessKeyId || !secretAccessKey) {
@@ -29,7 +32,10 @@ const client = new S3Client({
 mkdirSync(destDir, { recursive: true });
 
 for (const file of FILES) {
-  const key = `content-snapshots/${eventSlug}/latest/${file}`;
+  const prefix = snapshotId
+    ? `content-snapshots/${eventSlug}/${snapshotId}/${file}`
+    : `content-snapshots/${eventSlug}/latest/${file}`;
+  const key = prefix;
   try {
     const res = await client.send(new GetObjectCommand({ Bucket: process.env.R2_BUCKET ?? "pgegypt-media", Key: key }));
     const body = await res.Body?.transformToString();

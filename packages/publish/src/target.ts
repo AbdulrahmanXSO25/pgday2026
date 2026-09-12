@@ -12,6 +12,7 @@ export type PublishWriteResult = {
   ok: boolean;
   target: PublishTargetKind;
   contentHash?: string;
+  snapshotId?: string;
   writtenFiles?: string[];
   error?: string;
 };
