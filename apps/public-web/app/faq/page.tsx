@@ -15,7 +15,7 @@ export default function FaqPage() {
   return (
     <>
       <PageHero
-        eyebrow="$ SELECT * FROM faq"
+        eyebrow="FAQ"
         title="FAQ"
         description="Frequently asked questions about PG Day Egypt 2026."
       />

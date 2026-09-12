@@ -17,7 +17,7 @@ export default function SchedulePage() {
   return (
     <>
       <PageHero
-        eyebrow="$ SELECT * FROM schedule ORDER BY start"
+        eyebrow="Agenda"
         title="Schedule"
         description={`One track, ${talkCount} talks, and plenty of coffee — ${siteConfig.event.dateDisplay}, Cairo. All times in ${siteConfig.event.timezone.replace("_", "/")} local time.`}
       />
@@ -28,8 +28,8 @@ export default function SchedulePage() {
         <ScheduleList items={schedule} />
 
         <div className="mt-12 flex flex-col items-center gap-4 text-center">
-          <p className="mono-data text-ink-muted">
-            -- 13 rows returned · subject to change before the event
+          <p className="text-ink-muted text-sm">
+            The agenda is subject to change before the event.
           </p>
           <Button href="/register">Reserve your spot</Button>
         </div>

@@ -11,7 +11,7 @@ export default function CfpPage() {
   return (
     <main className="mx-auto w-full max-w-6xl px-5 py-12 sm:px-8">
       <div className="mx-auto max-w-2xl text-center">
-        <p className="mono-data text-pg-blue mb-2">CALL FOR PAPERS</p>
+        <p className="text-pg-blue mb-2 text-sm font-semibold">Call for Papers</p>
         <h1 className="font-display text-4xl font-bold tracking-tight sm:text-5xl">
           Speak at PG Day Egypt
         </h1>

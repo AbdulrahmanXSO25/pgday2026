@@ -137,7 +137,7 @@ export function RegisterForm() {
           Check your email for a confirmation from us. We&apos;ll follow up closer to the event with
           final attendance details.
         </p>
-        <p className="mono-data text-ink-muted mt-6">
+        <p className="text-ink-muted mt-6 text-sm">
           INSERT INTO attendees … <span className="text-pg-blue">1 row inserted</span>
         </p>
       </div>
@@ -210,7 +210,7 @@ export function RegisterForm() {
               />
             )}
             {errors[field.name] && (
-              <p id={`error-${field.name}`} className="mono-data text-pg-amber mt-1.5 text-[11px]">
+              <p id={`error-${field.name}`} className="text-pg-amber mt-1.5 text-xs">
                 ✗ {errors[field.name]}
               </p>
             )}
@@ -239,7 +239,7 @@ export function RegisterForm() {
             </span>
           </label>
           {errors.consent && (
-            <p id="error-consent" className="mono-data text-pg-amber mt-1.5 text-[11px]">
+            <p id="error-consent" className="text-pg-amber mt-1.5 text-xs">
               ✗ {errors.consent}
             </p>
           )}

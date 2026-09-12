@@ -14,7 +14,7 @@ export default function SpeakersPage() {
   return (
     <>
       <PageHero
-        eyebrow="$ SELECT * FROM speakers"
+        eyebrow="Speakers"
         title="Speakers"
         description="Meet the engineers sharing real production experience at PG Day Egypt 2026."
       />

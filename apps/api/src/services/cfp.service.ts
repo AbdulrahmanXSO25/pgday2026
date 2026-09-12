@@ -37,6 +37,8 @@ export type CfpServiceOptions = {
   mailer?: {
     send: (payload: Record<string, unknown>) => Promise<{ ok: boolean; error?: string }>;
   } | null;
+  /** Storage adapter — used to confirm uploaded portraits (§19.1) */
+  storage?: import("@pgegypt/storage").StorageAdapter | null;
 };
 
 /**
@@ -76,6 +78,8 @@ export async function createCfpSubmission(
     bio: normalized.submitterBio,
     company: undefined as string | undefined,
     role: undefined as string | undefined,
+    photoUrl: normalized.submitterPhotoUrl,
+    photoKey: normalized.submitterPhotoKey,
     isPrimary: 1,
   };
 
@@ -86,6 +90,8 @@ export async function createCfpSubmission(
     bio: s.bio,
     company: s.company,
     role: s.role,
+    photoUrl: s.photoUrl,
+    photoKey: s.photoKey,
     isPrimary: 0,
   }));
 
@@ -123,6 +129,37 @@ export async function createCfpSubmission(
       "INTERNAL_ERROR",
       "Something went wrong. Please try again in a moment."
     );
+  }
+
+  // §19.1 — confirm uploaded portrait (mark media ready + probe dimensions).
+  // Best-effort: a failed confirm never fails the submission.
+  if (options.storage && primarySpeaker.photoKey) {
+    void (async () => {
+      try {
+        const { media } = await import("@pgegypt/db");
+        const { eq } = await import("drizzle-orm");
+        const rows = (await db
+          .select()
+          .from(media)
+          .where(eq(media.storageKey, primarySpeaker.photoKey as string))) as unknown as Array<{
+          id: string;
+        }>;
+        const mediaRow = rows[0];
+        if (mediaRow) {
+          const { confirmMedia } = await import("./media.service.js");
+          await confirmMedia({
+            db,
+            storage: options.storage as import("@pgegypt/storage").StorageAdapter,
+            payload: { id: mediaRow.id, storageKey: primarySpeaker.photoKey as string },
+          });
+        }
+      } catch (err) {
+        console.error(
+          "[cfp] portrait confirm failed (non-fatal):",
+          err instanceof Error ? err.message : String(err)
+        );
+      }
+    })();
   }
 
   // §19.1 — best-effort "submission received" email (never fails the request, §18.5 principle)

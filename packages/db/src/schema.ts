@@ -275,6 +275,8 @@ export const cfpSubmissionSpeakers = sqliteTable(
     bio: text("bio"),
     company: text("company"),
     role: text("role"),
+    photoUrl: text("photo_url"),
+    photoKey: text("photo_key"),
     isPrimary: integer("is_primary").notNull().default(0),
     createdAt: integer("created_at").notNull().default(unixNow),
   },

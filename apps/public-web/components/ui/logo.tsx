@@ -26,7 +26,7 @@ export function Logo({ className }: { className?: string }) {
       </svg>
       <span className="flex flex-col leading-none">
         <span className="text-ink text-[15px] font-bold tracking-tight">PG Day Egypt</span>
-        <span className="mono-data text-pg-blue mt-0.5 text-[10px]">2026</span>
+        <span className="text-pg-blue mt-0.5 text-[10px] font-semibold">2026</span>
       </span>
     </Link>
   );

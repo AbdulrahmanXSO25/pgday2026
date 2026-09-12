@@ -21,7 +21,7 @@ export default function AboutPage() {
   return (
     <>
       <PageHero
-        eyebrow="$ SELECT * FROM about"
+        eyebrow="About"
         title="Built by the community, for the community"
         description="The first edition of a one-day PostgreSQL conference in Egypt — organized entirely by volunteers who love this database and want to grow a local community around it."
       />
@@ -60,7 +60,7 @@ export default function AboutPage() {
                     key={item}
                     className="text-ink-muted flex items-start gap-3 text-sm leading-relaxed"
                   >
-                    <span aria-hidden="true" className="mono-data text-pg-blue mt-0.5">
+                    <span aria-hidden="true" className="text-pg-blue mt-0.5">
                       ▸
                     </span>
                     {item}
@@ -82,7 +82,7 @@ export default function AboutPage() {
       </Section>
 
       <Section className="border-hairline bg-surface border-t">
-        <SectionHeader eyebrow="$ SELECT * FROM values" title="What we stand for" />
+        <SectionHeader eyebrow="Values" title="What we stand for" />
         <div className="grid gap-5 sm:grid-cols-3">
           {[
             {
@@ -100,7 +100,7 @@ export default function AboutPage() {
           ].map((value, i) => (
             <div key={value.title}>
               <article className="card card-hover h-full p-6">
-                <p className="mono-data text-pg-blue">{`0${i + 1}`}</p>
+                <p className="text-pg-blue">{`0${i + 1}`}</p>
                 <h3 className="font-display mt-3 text-lg font-semibold">{value.title}</h3>
                 <p className="text-ink-muted mt-2.5 text-sm leading-relaxed">{value.body}</p>
               </article>

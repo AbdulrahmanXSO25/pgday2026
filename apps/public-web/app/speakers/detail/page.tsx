@@ -39,12 +39,12 @@ function SpeakerDetailInner() {
         <p className="text-ink-muted max-w-2xl leading-relaxed">{speaker.bio}</p>
         {sessions.length > 0 && (
           <div className="mt-8">
-            <h2 className="mono-data text-pg-blue mb-3">sessions</h2>
+            <h2 className="text-pg-blue mb-3 text-lg font-semibold">Sessions</h2>
             <ul className="space-y-2">
               {sessions.map((s) => (
                 <li key={s.id} className="card p-4">
                   <p className="font-semibold">{s.title}</p>
-                  <p className="mono-data text-ink-muted text-xs">
+                  <p className="text-ink-muted text-sm">
                     {s.start} — {s.end}
                   </p>
                 </li>
