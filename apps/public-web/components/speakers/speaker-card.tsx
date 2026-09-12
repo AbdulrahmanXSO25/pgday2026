@@ -64,9 +64,11 @@ export function SpeakerCard({
             {speaker.name}
           </Link>
         </h3>
-        <p className="text-ink-muted mt-1 text-sm">
-          {speaker.role} · {speaker.company}
-        </p>
+        {[speaker.role, speaker.company].filter(Boolean).join(" · ") && (
+          <p className="text-ink-muted mt-1 text-sm">
+            {[speaker.role, speaker.company].filter(Boolean).join(" · ")}
+          </p>
+        )}
 
         {session && (
           <p className="text-ink-muted mt-2.5 line-clamp-2 text-sm leading-relaxed">

@@ -34,7 +34,7 @@ function SpeakerDetailInner() {
       <PageHero
         eyebrow="Speaker"
         title={speaker.name}
-        description={`${speaker.role} · ${speaker.company}`}
+        description={[speaker.role, speaker.company].filter(Boolean).join(" · ")}
       />
       <Section>
         <p className="text-ink-muted max-w-2xl leading-relaxed">{speaker.bio}</p>
