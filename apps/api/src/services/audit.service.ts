@@ -188,17 +188,38 @@ export async function createAuditLog(db: Db, input: AuditLogInput): Promise<{ id
  */
 export async function listAuditLogs(
   db: Db,
-  opts: { limit?: number; offset?: number } = {}
-): Promise<Array<typeof auditLogs.$inferSelect>> {
+  opts: {
+    limit?: number;
+    offset?: number;
+    actorId?: string;
+    targetType?: string;
+    from?: number;
+    to?: number;
+  } = {}
+): Promise<{ rows: Array<typeof auditLogs.$inferSelect>; total: number }> {
   const limit = Math.min(Math.max(opts.limit ?? 50, 1), 200);
   const offset = Math.max(opts.offset ?? 0, 0);
 
-  // Fetch all (small table) then paginate in JS for portability across better-sqlite3/D1
-  // This avoids drizzle orderBy differences between dialects.
+  // Fetch all (small table) then filter + paginate in JS for portability
+  // across better-sqlite3/D1 (avoids drizzle dialect differences).
   const rows = (await selectAll(
     (db as unknown as { select: () => { from: (t: unknown) => unknown } }).select().from(auditLogs)
   )) as Array<typeof auditLogs.$inferSelect>;
 
-  rows.sort((a, b) => (b.createdAt as number) - (a.createdAt as number));
-  return rows.slice(offset, offset + limit);
+  const actorId = opts.actorId?.trim();
+  const targetType = opts.targetType?.trim();
+  const from = opts.from;
+  const to = opts.to;
+
+  const filtered = rows.filter((r) => {
+    if (actorId && (r.actorId as string | null) !== actorId) return false;
+    if (targetType && (r.targetType as string | null) !== targetType) return false;
+    const ts = r.createdAt as number;
+    if (from != null && ts < from) return false;
+    if (to != null && ts > to) return false;
+    return true;
+  });
+
+  filtered.sort((a, b) => (b.createdAt as number) - (a.createdAt as number));
+  return { rows: filtered.slice(offset, offset + limit), total: filtered.length };
 }
