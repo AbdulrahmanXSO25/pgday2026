@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { getSpeaker, getSpeakerSessions } from "@/lib/content";
+import { getSpeaker, getSpeakerSessions, speakers } from "@/lib/content";
 import { PageHero } from "@/components/ui/page-hero";
 import { Section } from "@/components/ui/section";
 
@@ -21,8 +21,8 @@ export async function generateMetadata({
 }
 
 export function generateStaticParams() {
-  // keep static export minimal — actual speakers injected via content at build
-  return [{ slug: "karim-el-sayed" }];
+  // Real speaker ids from the content snapshot — every speaker gets a static page
+  return speakers.map((s) => ({ slug: s.id }));
 }
 
 export default async function SpeakerPage({ params }: { params: Promise<{ slug: string }> }) {
@@ -34,7 +34,7 @@ export default async function SpeakerPage({ params }: { params: Promise<{ slug: 
   return (
     <>
       <PageHero
-        eyebrow={`$ SELECT * FROM speakers WHERE id = '${slug}'`}
+        eyebrow="Speaker"
         title={speaker.name}
         description={`${speaker.role} · ${speaker.company}`}
       />
