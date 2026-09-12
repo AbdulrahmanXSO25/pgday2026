@@ -7,6 +7,7 @@
 export * from "./interface.js";
 export * from "./s3-storage.js";
 export * from "./minio-local.js";
+export * from "./r2-binding.js";
 
 // Convenience factories — typed re-exports for DI in apps/api
 export { createS3Storage, createR2StorageFromEnv } from "./s3-storage.js";
@@ -16,3 +17,9 @@ export {
   createLocalStorage,
   createDefaultMemoryStorage,
 } from "./minio-local.js";
+export {
+  createR2BindingStorage,
+  createR2PresignClient,
+  createHybridR2Storage,
+  createR2StorageFromWorkerEnv,
+} from "./r2-binding.js";

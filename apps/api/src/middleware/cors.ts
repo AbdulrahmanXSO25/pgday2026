@@ -3,21 +3,16 @@ import { cors } from "hono/cors";
 import type { AppEnv } from "../app.js";
 
 /**
- * CORS middleware — split for public vs admin.
+ * CORS middleware — explicit origin allowlist, credentials never true.
  *
- * Public routes (no credentials, open origins):
- *   - POST /v1/registrations  (public registration form)
- *   - POST /v1/cfp/submissions and GET /v1/cfp/submissions (public CFP)
+ * Applies to ALL paths (public + admin): after the admin static migration the
+ * admin panel calls the API cross-origin with a bearer token (Authorization
+ * header), so it needs CORS headers too. No cookies cross-origin → no
+ * Access-Control-Allow-Credentials.
  *
- * These are called directly from public-web fetch; no cookie credentials.
- *
- * Admin routes are same-origin via admin-web Next.js proxy
- * (`admin-web` -> `/api/:path*` -> API_BASE_URL/v1/:path*),
- * so they do not need CORS. We skip cors for those to avoid
- * exposing credentials to third-party origins.
- *
- * For local dev we also allow localhost origins when present,
- * but public routes remain credential-free.
+ * Registered FIRST in the middleware chain, and errorHandler attaches the same
+ * headers on 5xx — a thrown error must never produce a CORS-less response
+ * (browsers report that as a CORS failure and it costs hours to debug).
  */
 
 const PUBLIC_PATH_PREFIXES = ["/v1/registrations", "/v1/cfp", "/v1/health", "/health"] as const;
@@ -26,6 +21,8 @@ const PUBLIC_PATH_PREFIXES = ["/v1/registrations", "/v1/cfp", "/v1/health", "/he
 const ALLOWED_ORIGINS = new Set([
   "https://pgegypt-public-web.abdulrahmannader-123.workers.dev",
   "https://pgegypt-admin-web.abdulrahmannader-123.workers.dev",
+  "https://pgegypt-public-web.pages.dev",
+  "https://pgegypt-admin-web.pages.dev",
   "http://localhost:3000",
   "http://localhost:3001",
   "http://127.0.0.1:3000",
@@ -38,24 +35,51 @@ function isPublicPath(path: string): boolean {
   );
 }
 
-// Shared handler for more precise check: we inspect url pathname
 function isPublicRequest(pathname: string): boolean {
-  // Normalize: /v1/registrations?foo=bar -> /v1/registrations
   const base = pathname.split("?")[0] ?? "";
   if (base === "/health" || base === "/v1/health") return true;
   if (base === "/v1/registrations" || base.startsWith("/v1/registrations/")) return true;
   if (base === "/v1/cfp" || base.startsWith("/v1/cfp/")) return true;
-  // Also allow OPTIONS preflight for those paths
   return false;
 }
 
+/** Resolve the allowed origin for a request, or null (no CORS headers). */
+export function resolveAllowedOrigin(origin: string | null | undefined): string | null {
+  if (!origin) return null;
+  return ALLOWED_ORIGINS.has(origin) ? origin : null;
+}
+
+/** Attach CORS headers to an existing response (used by errorHandler on 5xx). */
+export function applyCorsHeaders(
+  c: { req: { header(n: string): string | undefined } },
+  response: Response
+): Response {
+  const origin = resolveAllowedOrigin(c.req.header("origin"));
+  if (!origin) return response;
+  const headers = new Headers(response.headers);
+  headers.set("Access-Control-Allow-Origin", origin);
+  headers.set("Vary", "Origin");
+  headers.set("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS");
+  headers.set(
+    "Access-Control-Allow-Headers",
+    "Content-Type, Authorization, X-Request-Id, X-Requested-With"
+  );
+  headers.set("Access-Control-Expose-Headers", "X-Request-Id");
+  headers.set("Access-Control-Max-Age", "86400");
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers,
+  });
+}
+
 /**
- * Main middleware entry — delegates to Hono's cors for public paths only.
- * Admin/same-origin paths bypass cors entirely.
+ * Main middleware — CORS for every request whose Origin is allowlisted.
+ * OPTIONS preflight short-circuits with 204.
  */
 export function corsMiddleware(): MiddlewareHandler<AppEnv> {
   const publicCors = cors({
-    origin: (origin: string | undefined) => (origin && ALLOWED_ORIGINS.has(origin) ? origin : null),
+    origin: (origin: string | undefined) => resolveAllowedOrigin(origin),
     allowMethods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowHeaders: ["Content-Type", "Authorization", "X-Request-Id", "X-Requested-With"],
     exposeHeaders: ["X-Request-Id"],
@@ -63,16 +87,15 @@ export function corsMiddleware(): MiddlewareHandler<AppEnv> {
     maxAge: 86400,
   });
 
-  // No-op cors for admin — we just continue without CORS headers.
-  // Keeping same middleware shape for composition.
-
   return async (c, next) => {
-    const url = new URL(c.req.url);
-    if (isPublicRequest(url.pathname)) {
-      return publicCors(c, next);
+    const origin = resolveAllowedOrigin(c.req.header("origin"));
+    if (!origin) {
+      // Not an allowlisted origin — no CORS headers; still serve same-origin requests
+      await next();
+      return;
     }
-    // Admin / same-origin: no cors headers, just proceed
-    await next();
+    // Preflight and normal requests both get CORS headers from hono/cors
+    return publicCors(c, next);
   };
 }
 

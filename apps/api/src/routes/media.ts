@@ -8,7 +8,7 @@ import { getDb, requireDb } from "../lib/db.js";
 import { requireStorage } from "../lib/storage.js";
 import { ApiError } from "../middleware/errorHandler.js";
 import * as mediaService from "../services/media.service.js";
-import { ALLOWED_MIME_TYPES } from "@pgegypt/storage";
+import { ALLOWED_MIME_TYPES, isValidStorageKey } from "@pgegypt/storage";
 
 // ---------------------------------------------------------------------------
 // Zod schemas — at boundary
@@ -264,6 +264,40 @@ export function mediaRoutes() {
   // Delete — WRITE
   r.delete("/v1/media/:id", requireAuth(), requirePermission("media:WRITE"), deleteHandler);
   r.delete("/v1/admin/media/:id", requireAuth(), requirePermission("media:WRITE"), deleteHandler);
+
+  // Public file proxy — serves media objects via the R2 binding.
+  // Used as MEDIA_PUBLIC_BASE_URL until a custom media domain exists.
+  // Key format: {eventId}/{prefix}/{uuid}-{name} (validated by isValidStorageKey).
+  r.get("/v1/media/file/*", async (c: import("hono").Context<AppEnv>) => {
+    const storage = requireStorage(c);
+    const key = new URL(c.req.url).pathname.replace(/^\/v1\/media\/file\//, "");
+    if (!key || !isValidStorageKey(key)) {
+      return c.json({ success: false as const, error: "NOT_FOUND", message: "Not Found" }, 404);
+    }
+    if (typeof storage.getObject !== "function") {
+      return c.json(
+        {
+          success: false as const,
+          error: "NOT_IMPLEMENTED",
+          message: "Storage does not support reads",
+        },
+        501
+      );
+    }
+    const obj = await storage.getObject(key).catch(() => null);
+    if (!obj) {
+      return c.json({ success: false as const, error: "NOT_FOUND", message: "Not Found" }, 404);
+    }
+    const head = await storage.headObject(key).catch(() => null);
+    const contentType = head?.contentType ?? "application/octet-stream";
+    return new Response(obj as unknown as ArrayBuffer, {
+      headers: {
+        "Content-Type": contentType,
+        "Cache-Control": "public, max-age=31536000, immutable",
+        "X-Content-Type-Options": "nosniff",
+      },
+    });
+  });
 
   return r;
 }
