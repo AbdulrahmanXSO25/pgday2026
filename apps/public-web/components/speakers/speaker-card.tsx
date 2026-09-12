@@ -24,7 +24,7 @@ export function SpeakerCard({
       )}
     >
       <Link
-        href={`/speakers/${speaker.id}`}
+        href={`/speakers/detail?id=${speaker.id}`}
         tabIndex={-1}
         aria-hidden="true"
         className="border-hairline bg-surface-raised relative block aspect-square border-b"
@@ -39,7 +39,7 @@ export function SpeakerCard({
 
       <div className="flex flex-1 flex-col p-4">
         <h3 className="text-base font-bold">
-          <Link href={`/speakers/${speaker.id}`} className="hover:text-pg-blue">
+          <Link href={`/speakers/detail?id=${speaker.id}`} className="hover:text-pg-blue">
             <span aria-hidden="true" className="absolute inset-0" />
             {speaker.name}
           </Link>
