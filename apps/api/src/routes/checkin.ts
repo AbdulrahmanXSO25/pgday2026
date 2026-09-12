@@ -94,7 +94,8 @@ async function sendAcceptanceEmail(
         await statusQueue.enqueue(job);
       } else if (statusMailer && typeof statusMailer.send === "function") {
         const { buildRegistrationAcceptedEmail } = await import("@pgegypt/mail");
-        const siteUrl = process.env.SITE_URL ?? "https://2026day.pgegypt.org";
+        const siteUrl =
+          process.env.SITE_URL ?? "https://pgegypt-public-web.abdulrahmannader-123.workers.dev";
         const tpl = buildRegistrationAcceptedEmail({ name: reg.name ?? "there", siteUrl });
         const res = await statusMailer.send({
           to: reg.email,
@@ -185,7 +186,8 @@ async function applyRegistrationStatusChange(
             buildRegistrationRejectedEmail,
             buildRegistrationWaitlistEmail,
           } = await import("@pgegypt/mail");
-          const siteUrl = process.env.SITE_URL ?? "https://2026day.pgegypt.org";
+          const siteUrl =
+            process.env.SITE_URL ?? "https://pgegypt-public-web.abdulrahmannader-123.workers.dev";
           const tpl =
             status === "confirmed"
               ? buildRegistrationAcceptedEmail({ name: reg.name ?? "there", siteUrl })

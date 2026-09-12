@@ -29,8 +29,8 @@ jobs:
       - name: OpenNext build
         working-directory: apps/admin-web
         env:
-          API_BASE_URL: https://api.pgegypt.org
-          NEXT_PUBLIC_SITE_URL: https://admin.pgegypt.org
+          API_BASE_URL: https://pgegypt-api.abdulrahmannader-123.workers.dev
+          NEXT_PUBLIC_SITE_URL: https://pgegypt-admin-web.abdulrahmannader-123.workers.dev
         run: pnpm exec opennextjs-cloudflare build
       - name: Deploy production
         env:

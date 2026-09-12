@@ -141,7 +141,8 @@ export async function createCfpSubmission(
       } else if (options.mailer && typeof options.mailer.send === "function") {
         // Direct-mailer fallback (no queue) — build the template inline
         const { buildCfpReceivedEmail } = await import("@pgegypt/mail");
-        const siteUrl = process.env.SITE_URL ?? "https://2026day.pgegypt.org";
+        const siteUrl =
+          process.env.SITE_URL ?? "https://pgegypt-public-web.abdulrahmannader-123.workers.dev";
         const tpl = buildCfpReceivedEmail({
           name: normalized.submitterName,
           title: normalized.title,

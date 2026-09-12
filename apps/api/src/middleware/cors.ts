@@ -24,8 +24,8 @@ const PUBLIC_PATH_PREFIXES = ["/v1/registrations", "/v1/cfp", "/v1/health", "/he
 
 // §30.3 — explicit origin allowlist (public-web + admin-web + local dev), credentials never true
 const ALLOWED_ORIGINS = new Set([
-  "https://2026day.pgegypt.org",
-  "https://admin.pgegypt.org",
+  "https://pgegypt-public-web.abdulrahmannader-123.workers.dev",
+  "https://pgegypt-admin-web.abdulrahmannader-123.workers.dev",
   "http://localhost:3000",
   "http://localhost:3001",
   "http://127.0.0.1:3000",

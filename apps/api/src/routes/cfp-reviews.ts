@@ -216,7 +216,9 @@ export function cfpReviewRoutes() {
             } else if (decisionMailer && typeof decisionMailer.send === "function") {
               // Direct-mailer fallback — build the template inline
               const { buildCfpRejectedEmail } = await import("@pgegypt/mail");
-              const siteUrl = process.env.SITE_URL ?? "https://2026day.pgegypt.org";
+              const siteUrl =
+                process.env.SITE_URL ??
+                "https://pgegypt-public-web.abdulrahmannader-123.workers.dev";
               const tpl = buildCfpRejectedEmail({ name, title, siteUrl });
               const res = await decisionMailer.send({
                 to: email,

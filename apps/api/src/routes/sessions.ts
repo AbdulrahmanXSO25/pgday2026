@@ -281,7 +281,8 @@ export async function sendCfpApprovalEmail(
         await queue.enqueue(job);
       } else if (mailer && typeof mailer.send === "function") {
         const { buildCfpApprovalEmail } = await import("@pgegypt/mail");
-        const siteUrl = process.env.SITE_URL ?? "https://2026day.pgegypt.org";
+        const siteUrl =
+          process.env.SITE_URL ?? "https://pgegypt-public-web.abdulrahmannader-123.workers.dev";
         const tpl = buildCfpApprovalEmail({
           name: primary.name || "there",
           title: session.title,

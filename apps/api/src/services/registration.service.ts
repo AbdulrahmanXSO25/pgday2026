@@ -140,7 +140,8 @@ export async function createRegistration(
       } else if (mailer && typeof mailer.send === "function") {
         // Direct-mailer fallback (no queue) — build the template inline
         const { buildRegistrationReceivedEmail } = await import("@pgegypt/mail");
-        const siteUrl = process.env.SITE_URL ?? "https://2026day.pgegypt.org";
+        const siteUrl =
+          process.env.SITE_URL ?? "https://pgegypt-public-web.abdulrahmannader-123.workers.dev";
         const tpl = buildRegistrationReceivedEmail({ name, siteUrl });
         const res = await mailer.send({
           to: email,

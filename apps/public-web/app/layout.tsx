@@ -20,7 +20,7 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://2026day.pgegypt.org"),
+  metadataBase: new URL("https://pgegypt-public-web.abdulrahmannader-123.workers.dev"),
   title: {
     default: `${siteConfig.event.name} — ${siteConfig.event.tagline}`,
     template: `%s · ${siteConfig.event.name}`,
@@ -39,7 +39,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "en_US",
-    url: "https://2026day.pgegypt.org",
+    url: "https://pgegypt-public-web.abdulrahmannader-123.workers.dev",
     siteName: siteConfig.event.name,
     title: `${siteConfig.event.name} — ${siteConfig.event.tagline}`,
     description: `A free, single-track PostgreSQL community conference. ${siteConfig.event.dateDisplay}, ${siteConfig.event.city}.`,

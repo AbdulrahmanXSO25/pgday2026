@@ -25,7 +25,7 @@ export type MailerEnv = {
 
 export function createMailerFromEnv(env: MailerEnv = process.env as MailerEnv): Mailer {
   const from = env.EMAIL_FROM ?? "PG Day Egypt <noreply@pgegypt.org>";
-  const siteUrl = env.SITE_URL ?? "https://2026day.pgegypt.org";
+  const siteUrl = env.SITE_URL ?? "https://pgegypt-public-web.abdulrahmannader-123.workers.dev";
   const isProd = env.RUNTIME === "production" || env.NODE_ENV === "production";
 
   if (env.RESEND_API_KEY && isProd) {

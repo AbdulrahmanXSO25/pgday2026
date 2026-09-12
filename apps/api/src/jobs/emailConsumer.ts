@@ -44,7 +44,10 @@ export function createLocalEmailPipeline(siteUrl?: string): {
 }
 
 export function createEmailConsumer(deps: EmailConsumerDeps) {
-  const siteUrl = deps.siteUrl ?? process.env.SITE_URL ?? "https://2026day.pgegypt.org";
+  const siteUrl =
+    deps.siteUrl ??
+    process.env.SITE_URL ??
+    "https://pgegypt-public-web.abdulrahmannader-123.workers.dev";
 
   return async (msg: QueueMessage<EmailJob>): Promise<void> => {
     const job = msg.payload;

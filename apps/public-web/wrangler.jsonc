@@ -24,9 +24,9 @@
     "binding": "IMAGES"
   },
   "vars": {
-    "NEXT_PUBLIC_SITE_URL": "https://2026day.pgegypt.org",
-    "NEXT_PUBLIC_API_BASE_URL": "https://api.pgegypt.org",
-    "SITE_URL": "https://2026day.pgegypt.org"
+    "NEXT_PUBLIC_SITE_URL": "https://pgegypt-public-web.abdulrahmannader-123.workers.dev",
+    "NEXT_PUBLIC_API_BASE_URL": "https://pgegypt-api.abdulrahmannader-123.workers.dev",
+    "SITE_URL": "https://pgegypt-public-web.abdulrahmannader-123.workers.dev"
   },
   "observability": { "enabled": true },
   "upload_source_maps": true

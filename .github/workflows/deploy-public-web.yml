@@ -41,8 +41,8 @@ jobs:
       - name: OpenNext build
         working-directory: apps/public-web
         env:
-          NEXT_PUBLIC_SITE_URL: https://2026day.pgegypt.org
-          NEXT_PUBLIC_API_BASE_URL: https://api.pgegypt.org
+          NEXT_PUBLIC_SITE_URL: https://pgegypt-public-web.abdulrahmannader-123.workers.dev
+          NEXT_PUBLIC_API_BASE_URL: https://pgegypt-api.abdulrahmannader-123.workers.dev
         run: pnpm exec opennextjs-cloudflare build
       - name: noindex guard (§27.5)
         run: node scripts/assert-no-noindex.mjs apps/public-web/.open-next/assets

@@ -297,43 +297,14 @@ WHERE NOT EXISTS (SELECT 1 FROM pragma_table_info('registrations') WHERE name='e
 DROP TABLE IF EXISTS registrations_old_backup;
 -- Detect: if pragma_table_info shows event_id missing, we swap
 -- We cannot do conditional DDL in SQLite, so we attempt a safe swap:
--- If new table has data migrated and old table has no event_id, we drop old and rename new.
--- We use a workaround: create a marker table indicating whether swap is needed.
+-- Step 3: swap — 0002 runs exactly once per database (wrangler tracks applied
+-- migrations). At this point `registrations` is the 0001 table (no event_id)
+-- and `registrations_new` holds the migrated rows (if any). Drop old, rename new.
+DROP TABLE IF EXISTS registrations_old_backup;
+ALTER TABLE registrations RENAME TO registrations_old_backup;
+DROP TABLE registrations_old_backup;
+ALTER TABLE registrations_new RENAME TO registrations;
 
--- The swap logic is handled by the outer script (migrate.ts) for reliability.
--- As a fallback in pure SQL, we ensure the canonical `registrations` table exists with correct schema:
--- If `registrations` already has event_id column, keep it; otherwise, after migration the admin should rely on registrations_new.
--- To keep same migrations for D1/local, we also ensure the definitive table `registrations` is created if missing column — we do:
--- When registrations table lacks event_id, the INSERT above populated registrations_new.
--- Now if registrations table still lacks event_id, drop it and rename.
--- SQLite doesn't allow IF checks, so we attempt both possibilities idempotently:
-
--- Attempt 1: if old registrations has wrong schema, drop old and rename new (will succeed only when new has data and old is incompatible)
--- We use a trick: renaming only when table_info indicates mismatch is handled in migrate.ts script.
--- For SQL-only idempotency, ensure canonical `registrations` table exists:
-CREATE TABLE IF NOT EXISTS registrations (
-  id TEXT PRIMARY KEY,
-  event_id TEXT NOT NULL REFERENCES events(id) ON DELETE CASCADE,
-  name TEXT NOT NULL CHECK (length(name) >= 2),
-  email TEXT NOT NULL,
-  organization TEXT,
-  role TEXT,
-  dietary_notes TEXT,
-  status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending','confirmed','waitlisted','declined')),
-  checkin_token TEXT UNIQUE,
-  checked_in_at INTEGER,
-  created_at INTEGER NOT NULL DEFAULT (unixepoch()),
-  updated_at INTEGER NOT NULL DEFAULT (unixepoch()),
-  deleted_at INTEGER,
-  UNIQUE(event_id, email)
-);
-
--- If we just created the canonical table empty but registrations_new has migrated rows, copy them over now
-INSERT OR IGNORE INTO registrations (id, event_id, name, email, organization, role, dietary_notes, status, checkin_token, checked_in_at, created_at, updated_at, deleted_at)
-SELECT id, event_id, name, email, organization, role, dietary_notes, status, checkin_token, checked_in_at, created_at, updated_at, deleted_at FROM registrations_new;
-
--- Cleanup temp (keep for idempotency, but drop indexes on temp after copy)
-DROP TABLE IF EXISTS registrations_new;
 -- Recreate indexes on canonical table (idempotent)
 CREATE UNIQUE INDEX IF NOT EXISTS uq_registrations_event_email ON registrations(event_id, email);
 CREATE UNIQUE INDEX IF NOT EXISTS uq_registrations_checkin_token ON registrations(checkin_token);
@@ -373,26 +344,11 @@ SELECT
 FROM rate_limits
 WHERE NOT EXISTS (SELECT 1 FROM pragma_table_info('rate_limits') WHERE name='updated_at');
 
--- If rate_limits lacks updated_at column, swap
--- Similar swap logic as registrations — handled in migrate.ts; SQL fallback:
-CREATE TABLE IF NOT EXISTS rate_limits_canonical_check (
-  key TEXT PRIMARY KEY,
-  window_start INTEGER NOT NULL,
-  count INTEGER NOT NULL DEFAULT 0,
-  updated_at INTEGER NOT NULL DEFAULT (unixepoch())
-);
--- Ensure canonical rate_limits has correct schema (if empty, data will be copied)
--- If old table missing updated_at, old rows are already in rate_limits_new; copy to canonical if needed
-INSERT OR IGNORE INTO rate_limits_canonical_check SELECT * FROM rate_limits_new;
-DROP TABLE IF EXISTS rate_limits_new;
-
--- Ensure definitive rate_limits table has target schema — if old still exists without updated_at, recreate via temp rename
--- To keep SQL idempotent, ensure rate_limits table exists with correct columns via CREATE IF NOT EXISTS already satisfied.
--- Add updated_at column if missing (ALTER ADD COLUMN is safe)
--- We use a trick: try to add column, ignore error if exists (SQLite will error but we suppress via OR IGNORE? Not supported — use migrate.ts helper).
--- So we declare it here; if column missing, the ALTER will be executed by migrate.ts.
-
--- Ensure updated_at column exists via idempotent ALTER (will fail if exists — handled by migrate script, not here)
+-- Swap: old rate_limits (TEXT window_start, no updated_at) → drop; rate_limits_new → rate_limits
+DROP TABLE IF EXISTS rate_limits_old_backup;
+ALTER TABLE rate_limits RENAME TO rate_limits_old_backup;
+DROP TABLE rate_limits_old_backup;
+ALTER TABLE rate_limits_new RENAME TO rate_limits;
 
 -- ---------------------------------------------------------------------------
 -- media
