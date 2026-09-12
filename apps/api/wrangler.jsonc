@@ -8,6 +8,7 @@
     "RUNTIME": "production",
     "API_BASE_URL": "https://pgegypt-api.abdulrahmannader-123.workers.dev",
     "SITE_URL": "https://pgegypt-public-web.abdulrahmannader-123.workers.dev",
+    "MEDIA_PUBLIC_BASE_URL": "https://pgegypt-api.abdulrahmannader-123.workers.dev/v1/media/file",
     "EMAIL_FROM": "PG Day Egypt <noreply@pgegypt.org>",
     "GITHUB_REPO": "AbdulrahmanXSO25/pgday2026"
   },
